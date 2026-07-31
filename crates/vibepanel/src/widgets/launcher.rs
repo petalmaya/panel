@@ -2,8 +2,6 @@
 //! Minimal first implementation: click runs a configured command (default: rofi -show drun).
 //! Future improvements: detailed popover with .desktop discovery and search.
 
-use std::rc::Rc;
-
 use gtk4::prelude::*;
 use gtk4::{GestureClick, Label, Align};
 use gtk4::gdk;
@@ -14,17 +12,28 @@ use vibepanel_core::config::WidgetEntry;
 
 use crate::widgets::base::{BaseWidget, describe_exit_status};
 use crate::widgets::{WidgetConfig, warn_unknown_options};
-use crate::styles::{icon as icon_style, state};
+use crate::styles::{icon as icon_style, state, widget as wgt};
+use crate::services::icons::{IconHandle, IconsService};
 use tracing::warn;
 
 /// Known options for launcher widget
 const KNOWN_OPTIONS: &[&str] = &["icon", "label", "launch_cmd"];
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct LauncherConfig {
     pub icon: Option<String>,
     pub label: Option<String>,
     pub launch_cmd: String,
+}
+
+impl Default for LauncherConfig {
+    fn default() -> Self {
+        Self {
+            icon: None,
+            label: None,
+            launch_cmd: "rofi -show drun".to_string(),
+        }
+    }
 }
 
 impl WidgetConfig for LauncherConfig {
@@ -45,8 +54,9 @@ impl WidgetConfig for LauncherConfig {
 
 pub struct LauncherWidget {
     base: BaseWidget,
-    // kept for lifetime
-    _icon_name: Option<String>,
+    // keep icon handle alive when using IconsService
+    _icon_handle: Option<IconHandle>,
+    // keep gesture alive so the controller remains registered
     _gesture: GestureClick,
 }
 
@@ -56,12 +66,27 @@ impl LauncherWidget {
         let css_class = "launcher";
         let base = BaseWidget::new(&[css_class]);
 
+        let mut icon_handle: Option<IconHandle> = None;
+
         if let Some(ref icon_name) = cfg.icon {
-            // small icon label fallback; integration with IconsService could be added
-            let icon_lbl = Label::new(Some(icon_name));
-            icon_lbl.add_css_class(icon_style::ROOT);
-            icon_lbl.set_halign(Align::Center);
-            base.content().append(&icon_lbl);
+            if let Some(glyph) = icon_name.strip_prefix("glyph:") {
+                // render literal glyph/emoji as a label (matches custom.rs styling)
+                let glyph_lbl = Label::new(Some(glyph));
+                glyph_lbl.add_css_class(icon_style::ROOT);
+                glyph_lbl.add_css_class(wgt::CUSTOM_ICON_GLYPH);
+                glyph_lbl.set_halign(Align::Center);
+                glyph_lbl.set_hexpand(true);
+                base.content().prepend(&glyph_lbl);
+            } else {
+                // Create a proper icon handle so it reacts to theme changes
+                let handle = IconsService::global().create_icon(icon_name, &[]);
+                let widget = handle.widget();
+                widget.set_halign(gtk4::Align::Center);
+                widget.set_hexpand(true);
+                widget.set_visible(true);
+                base.content().prepend(&widget);
+                icon_handle = Some(handle);
+            }
         }
 
         if let Some(lbl) = cfg.label.as_deref() {
@@ -77,7 +102,7 @@ impl LauncherWidget {
         gesture.set_button(gdk::BUTTON_PRIMARY);
         gesture.connect_released(move |_g, _n_press, _x, _y| {
             let cmd = cmd.clone();
-            glib::spawn_future_local(async move {
+            glib::MainContext::default().spawn_local(async move {
                 let _ = gio::spawn_blocking(move || {
                     use std::process::{Command, Stdio};
                     match Command::new("sh")
@@ -103,11 +128,12 @@ impl LauncherWidget {
                 }).await;
             });
         });
-        base.widget().add_controller(&gesture);
+        // register controller with a cloned instance so add_controller gets an owned IsA<EventController>
+        base.widget().add_controller(gesture.clone());
 
         Self {
             base,
-            _icon_name: cfg.icon,
+            _icon_handle: icon_handle,
             _gesture: gesture,
         }
     }
