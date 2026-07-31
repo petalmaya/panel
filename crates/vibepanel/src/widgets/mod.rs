@@ -20,6 +20,7 @@ mod calendar_popover;
 mod clock;
 mod cpu;
 mod custom;
+mod launcher;
 mod gpu;
 mod keyboard_layout;
 pub mod layer_shell_popover;
@@ -74,6 +75,7 @@ pub use workspaces::{WorkspacesConfig, WorkspacesWidget};
 
 pub use cpu::{CpuConfig, CpuWidget};
 pub use custom::{CustomConfig, CustomWidget};
+pub use launcher::{LauncherConfig, LauncherWidget};
 pub use gpu::{GpuConfig, GpuWidget};
 pub use keyboard_layout::{KeyboardLayoutConfig, KeyboardLayoutWidget};
 pub use memory::{MemoryConfig, MemoryWidget};
