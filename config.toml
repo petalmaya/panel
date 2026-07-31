@@ -61,6 +61,7 @@ label = "Apps"
 #   # suspend_command = "loginctl suspend"
 #   # lock_command = "loginctl lock-session"
 #   # logout_command = "niri msg action quit"  # unset/empty = compositor IPC logout
+#   # remember_expanded_state = true  # Keep cards expanded across panel close/open
 #
 #   [widgets.media]
 #   visualizer = true  # Enable/disable cava audio visualizer (default: true)
