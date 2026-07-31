@@ -1,39 +1,32 @@
 //! Simple application launcher widget.
-//! Minimal first implementation: click runs a configured command (default: rofi -show drun).
-//! Future improvements: detailed popover with .desktop discovery and search.
+//! Minimal integrated popover that runs a configured command (default: rofi -show drun).
+//! Uses BaseWidget::create_menu to provide a LayerShell popover.
 
 use gtk4::prelude::*;
-use gtk4::{GestureClick, Label, Align};
+use gtk4::{Label, Align};
 use gtk4::gdk;
 use gtk4::gio;
 use gtk4::glib;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use vibepanel_core::config::WidgetEntry;
 
 use crate::widgets::base::{BaseWidget, describe_exit_status};
 use crate::widgets::{WidgetConfig, warn_unknown_options};
-use crate::styles::{icon as icon_style, state, widget as wgt};
-use crate::services::icons::{IconHandle, IconsService};
+use crate::styles::{icon as icon_style, state};
 use tracing::warn;
+
+use crate::widgets::launcher_popover::{build_launcher_popover_with_controller, LauncherPopoverController};
 
 /// Known options for launcher widget
 const KNOWN_OPTIONS: &[&str] = &["icon", "label", "launch_cmd"];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct LauncherConfig {
     pub icon: Option<String>,
     pub label: Option<String>,
     pub launch_cmd: String,
-}
-
-impl Default for LauncherConfig {
-    fn default() -> Self {
-        Self {
-            icon: None,
-            label: None,
-            launch_cmd: "rofi -show drun".to_string(),
-        }
-    }
 }
 
 impl WidgetConfig for LauncherConfig {
@@ -54,10 +47,10 @@ impl WidgetConfig for LauncherConfig {
 
 pub struct LauncherWidget {
     base: BaseWidget,
-    // keep icon handle alive when using IconsService
-    _icon_handle: Option<IconHandle>,
-    // keep gesture alive so the controller remains registered
-    _gesture: GestureClick,
+    // kept for lifetime
+    _icon_name: Option<String>,
+    // Keep controller alive for popover reuse
+    _controller: Option<Rc<LauncherPopoverController>>,
 }
 
 impl LauncherWidget {
@@ -66,27 +59,12 @@ impl LauncherWidget {
         let css_class = "launcher";
         let base = BaseWidget::new(&[css_class]);
 
-        let mut icon_handle: Option<IconHandle> = None;
-
         if let Some(ref icon_name) = cfg.icon {
-            if let Some(glyph) = icon_name.strip_prefix("glyph:") {
-                // render literal glyph/emoji as a label (matches custom.rs styling)
-                let glyph_lbl = Label::new(Some(glyph));
-                glyph_lbl.add_css_class(icon_style::ROOT);
-                glyph_lbl.add_css_class(wgt::CUSTOM_ICON_GLYPH);
-                glyph_lbl.set_halign(Align::Center);
-                glyph_lbl.set_hexpand(true);
-                base.content().prepend(&glyph_lbl);
-            } else {
-                // Create a proper icon handle so it reacts to theme changes
-                let handle = IconsService::global().create_icon(icon_name, &[]);
-                let widget = handle.widget();
-                widget.set_halign(gtk4::Align::Center);
-                widget.set_hexpand(true);
-                widget.set_visible(true);
-                base.content().prepend(&widget);
-                icon_handle = Some(handle);
-            }
+            // small icon label fallback; integration with IconsService could be added
+            let icon_lbl = Label::new(Some(icon_name));
+            icon_lbl.add_css_class(icon_style::ROOT);
+            icon_lbl.set_halign(Align::Center);
+            base.content().append(&icon_lbl);
         }
 
         if let Some(lbl) = cfg.label.as_deref() {
@@ -97,44 +75,41 @@ impl LauncherWidget {
         // make clickable (hover style)
         base.widget().add_css_class(state::CLICKABLE);
 
-        let gesture = GestureClick::new();
-        let cmd = cfg.launch_cmd.clone();
-        gesture.set_button(gdk::BUTTON_PRIMARY);
-        gesture.connect_released(move |_g, _n_press, _x, _y| {
-            let cmd = cmd.clone();
-            glib::MainContext::default().spawn_local(async move {
-                let _ = gio::spawn_blocking(move || {
-                    use std::process::{Command, Stdio};
-                    match Command::new("sh")
-                        .args(["-c", &cmd])
-                        .stdin(Stdio::null())
-                        .stdout(Stdio::null())
-                        .stderr(Stdio::null())
-                        .spawn()
-                    {
-                        Ok(mut child) => match child.wait() {
-                            Ok(status) if !status.success() => {
-                                warn!("launcher command '{}' failed: {}", cmd, describe_exit_status(status));
-                            }
-                            Err(e) => {
-                                warn!("launcher command '{}' wait failed: {}", cmd, e);
-                            }
-                            _ => {}
-                        },
-                        Err(e) => {
-                            warn!("failed to spawn launcher command '{}': {}", cmd, e);
-                        }
-                    }
-                }).await;
+        // Create a lazy menu and set a builder that creates the popover content.
+        // Keep a controller holder so we retain the controller behind the builder.
+        let controller_holder: Rc<RefCell<Option<Rc<LauncherPopoverController>>>> = Rc::new(RefCell::new(None));
+
+        // Create a placeholder for the menu; actual builder will be set below.
+        let menu_handle = base.create_menu(|| gtk4::Label::new(None).upcast::<gtk4::Widget>());
+
+        {
+            let controller_holder = controller_holder.clone();
+            let cfg_clone = cfg.clone();
+            menu_handle.set_builder_with_monitor(move |_monitor| {
+                // Build the popover and retain controller so it stays alive.
+                let (widget, controller) = build_launcher_popover_with_controller(&cfg_clone);
+                *controller_holder.borrow_mut() = Some(controller.clone());
+                widget
             });
-        });
-        // register controller with a cloned instance so add_controller gets an owned IsA<EventController>
-        base.widget().add_controller(gesture.clone());
+        }
+
+        // Reuse the popover across opens to avoid re-building desktop scanning on every open.
+        menu_handle.set_reuse_content(true);
+
+        // When the popover is shown, refresh its content in case the external state changed.
+        {
+            let ch = controller_holder.clone();
+            menu_handle.set_on_show(move || {
+                if let Some(ref ctrl) = *ch.borrow() {
+                    ctrl.refresh();
+                }
+            });
+        }
 
         Self {
             base,
-            _icon_handle: icon_handle,
-            _gesture: gesture,
+            _icon_name: cfg.icon,
+            _controller: controller_holder.borrow().clone(),
         }
     }
 
