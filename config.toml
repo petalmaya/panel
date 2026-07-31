@@ -24,6 +24,7 @@ center = ["media"]
 right = [
   "tray",
   "updates",
+  "launcher",
   "cpu",
   "quick_settings",
   "battery",
@@ -34,6 +35,10 @@ border_radius = 40
 background_opacity = 1.0
 # popover_background_opacity = 0.9  # Override popover opacity (default: max of bar and widget opacity)
 # outline = true                    # Override theme.outline for widgets (omit = inherit)
+
+[widgets.launcher]
+icon = "glyph:⏏"      # optional: glyph or icon name (currently rendered as a label fallback)
+label = "Apps"
 
 # Per-widget options use [widgets.<name>] sections.
 # Example:
@@ -85,13 +90,13 @@ background_opacity = 1.0
 # See documentation for all widget options.
 
 [theme]
-mode = "dark" # "auto", "dark", "light", "gtk"
+mode = "gtk" # "auto", "dark", "light", "gtk"
 #               "auto" = wallpaper-adaptive theming
 #               (detects from hyprpaper, awww/swww, wpaperd, waypaper)
-#scheme = "dark" # Material You polarity: "dark", "light", or "gtk" (auto mode only)
+scheme = "dark" # Material You polarity: "dark", "light", or "gtk" (auto mode only)
 #                  "gtk" follows your GTK/system dark or light preference;
 #                  if no preference is set, it's derived from wallpaper luminance
-#wallpaper = "/path/to/image.png"  # Explicit wallpaper for auto mode (default: auto-detect)
+#wallpaper = "/home/alice/Pictures/Wallpaper/gawupaper.png"  # Explicit wallpaper for auto mode (default: auto-detect)
 #accent = "#adabe0" # "gtk", "none", or hex color (overrides wallpaper accent in auto mode)
 #animations = true  # Enable/disable all CSS transitions and animations
 #ripple = true      # Enable/disable Material Design ripple effect on click
