@@ -1,6 +1,6 @@
 # Documentation
 
-Documentation has moved to the [wiki](https://github.com/prankstr/vibepanel/wiki).
+Documentation is maintained from the original [VibePanel wiki](https://github.com/prankstr/vibepanel/wiki), which applies to BlaShell as well:
 
 - [Installation](https://github.com/prankstr/vibepanel/wiki/Installation)
 - [Configuration](https://github.com/prankstr/vibepanel/wiki/Configuration)

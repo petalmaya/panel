@@ -1,30 +1,29 @@
-# VibePanel
+# BlaShell
 
 <p align="center">
   <img alt="Static Badge" src="https://img.shields.io/badge/debian%20trixe%20-%20?style=for-the-badge&logo=debian&color=purple">
-  <a href="https://github.com/prankstr/vibepanel/releases"><img src="https://img.shields.io/github/v/release/prankstr/vibepanel?style=for-the-badge&labelColor=101418&color=adabe0" alt="GitHub release"></a>
-  <a href="https://aur.archlinux.org/packages/vibepanel-bin"><img src="https://img.shields.io/aur/version/vibepanel-bin?style=for-the-badge&labelColor=101418&color=adabe0" alt="AUR version"></a>
-  <a href="https://github.com/prankstr/vibepanel/blob/main/LICENSE"><img src="https://img.shields.io/github/license/prankstr/vibepanel?style=for-the-badge&labelColor=101418&color=adabe0" alt="License"></a>
+  <img src="https://img.shields.io/github/license/petalmaya/panel?style=for-the-badge&labelColor=101418&color=adabe0" alt="License">
   <br>
-  <img src="assets/screenshots/islands_bar_dark.png" alt="VibePanel" width="830">
+  <img src="assets/screenshots/islands_bar_dark.png" alt="BlaShell" width="830">
 </p>
 
-A batteries-included Wayland panel that replaces your status bar, notification daemon, OSD and more with a single binary. Works out of the box with [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), [MangoWC](https://github.com/mangowm/mango) and other compositors.
+A batteries-included Wayland panel that replaces your status bar, notification daemon, OSD and more with a single binary. Works out of the box with [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), and more.
 
-## Fork Notice!
+## Credits
 
-This is a fork of [[prankstr's](https://github.com/prankstr/vibepanel)]() VibePanel, Altered to suit my needs. 
+This project is a fork and continuation of [VibePanel](https://github.com/prankstr/vibepanel) by [David (prankstr)](https://github.com/prankstr), which was originally licensed under the MIT License. We maintain that license and credit the original author for their work.
 
-## Addition
+## Modifications
 
-* App Launcher panel.
+* Renamed binary to `blashell`
+* App Launcher panel enhancements
 
-## Why VibePanel?
+## Why BlaShell?
 
-VibePanel is something between a simple status bar and a full desktop shell:
+BlaShell is something between a simple status bar and a full desktop shell:
 
 - **Fast & native** – Single Rust binary with GTK4. Direct system integration, low resource usage.
-- **Batteries included** – VibePanel replaces several common components with a single binary:
+- **Batteries included** – BlaShell replaces several common components with a single binary:
   - **Notifications** – Integrated notification center
   - **OSD** – Built-in on-screen display for volume and brightness
   - **Quick settings** – Native panel for Wi‑Fi, Bluetooth, audio, power profiles and more
@@ -72,32 +71,32 @@ https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
 
 ## Quickstart
 
-1. Install VibePanel:
+1. Install BlaShell:
    
-   ***Other distros:** Install [runtime dependencies](https://github.com/prankstr/vibepanel/wiki/Installation#runtime-dependencies), then:
+   ***Other distros:** Install runtime dependencies, then:
    
    ```sh
-   curl -LO https://github.com/petalmaya/panel/releases/latest/download/vibepanel-x86_64-unknown-linux-gnu
-   install -Dm755 vibepanel-x86_64-unknown-linux-gnu ~/.local/bin/vibepanel
+   curl -LO https://github.com/petalmaya/panel/releases/latest/download/blashell-x86_64-unknown-linux-gnu
+   install -Dm755 blashell-x86_64-unknown-linux-gnu ~/.local/bin/blashell
    ```
    
-   Or [build from source](https://github.com/prankstr/vibepanel/wiki/Installation#from-source).
+   Or build from source.
 
 2. Run it:
    
    ```sh
-   vibepanel
+   blashell
    ```
 
 See the [Installation wiki](https://github.com/prankstr/vibepanel/wiki/Installation) for more information.
 
 ## Configuration
 
-VibePanel doesn't require a config file to run, but if you want to customize anything, create a config at `~/.config/vibepanel/config.toml`:
+BlaShell doesn't require a config file to run, but if you want to customize anything, create a config at `~/.config/blashell/config.toml`:
 
 ```sh
-mkdir -p ~/.config/vibepanel
-vibepanel --print-example-config > ~/.config/vibepanel/config.toml
+mkdir -p ~/.config/blashell
+blashell --print-example-config > ~/.config/blashell/config.toml
 ```
 
 Here's a minimal example:
@@ -120,21 +119,17 @@ Changes hot-reload instantly. See the [Configuration wiki](https://github.com/pr
 
 ## Status
 
-VibePanel is pre-1.0 and under active development.
-Config options and defaults may change between minor releases, check the changelog when upgrading.
-
-I built the first version in Python but wanted to migrate to Rust for performance, portability and simply to learn Rust.
-The porting took waay too long in a language I was still learning so I've written the code with a lot of AI assistance.
-I review all code and use VibePanel daily on multiple computers.
+BlaShell is based on VibePanel and continues its active development.
+Config options and defaults may change between releases.
 
 ### Compatibility
 
-- **Compositors:** [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), [Miracle WM](https://github.com/miracle-wm-org/miracle-wm), [Scroll](https://github.com/dawsers/scroll) and other i3-IPC compatible compositors. [MangoWC](https://github.com/mangowm/mango)/[DWL](https://codeberg.org/dwl/dwl) via dwl-ipc.
+- **Compositors:** [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), [Miracle WM](https://github.com/miracle-wm-org/miracle-wm)
 - **Updates widget:** dnf, pacman/paru and flatpak.
 
 ## Documentation
 
-Full documentation lives in the [wiki](https://github.com/prankstr/vibepanel/wiki):
+Full documentation lives in the [VibePanel wiki](https://github.com/prankstr/vibepanel/wiki):
 
 - [Installation](https://github.com/prankstr/vibepanel/wiki/Installation) - Dependencies, building, auto-start
 - [Configuration](https://github.com/prankstr/vibepanel/wiki/Configuration) - All config options
@@ -145,12 +140,12 @@ Full documentation lives in the [wiki](https://github.com/prankstr/vibepanel/wik
 
 ## Contributing
 
-- Found a bug? [Open an issue](https://github.com/prankstr/vibepanel/issues)
-- Want a feature? [Request it](https://github.com/prankstr/vibepanel/issues)
-- Pull requests welcome
-
-If you find VibePanel useful, consider giving it a star. It helps others discover the project.
+Pull requests welcome. Please ensure changes are well-tested.
 
 ## License
 
-MIT
+MIT License - See LICENSE file for details.
+
+### Attribution
+
+This project is derived from [VibePanel](https://github.com/prankstr/vibepanel) by David (prankstr), originally licensed under the MIT License. We maintain the same license and gratefully acknowledge the original author's work.

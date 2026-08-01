@@ -1,5 +1,5 @@
 [package]
-name = "vibepanel"
+name = "blashell"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,7 +7,7 @@ authors.workspace = true
 description = "A modern Wayland status bar"
 
 [[bin]]
-name = "vibepanel"
+name = "blashell"
 path = "src/main.rs"
 
 [dependencies]
