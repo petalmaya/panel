@@ -13,7 +13,7 @@ A batteries-included Wayland panel that replaces your status bar, notification d
 
 ## Fork Notice!
 
-This is a fork of [[prankstr's](https://github.com/prankstr/vibepanel)]() VibePanel, Altered to suit my needs. 
+This is a fork of [prankstr's](https://github.com/prankstr/vibepanel) VibePanel, Altered to suit my needs. 
 
 ## Addition
 
