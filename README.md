@@ -1,10 +1,10 @@
-# BlaShell
+# blåShell
 
 <p align="center">
   <img alt="Static Badge" src="https://img.shields.io/badge/debian%20trixe%20-%20?style=for-the-badge&logo=debian&color=purple">
   <img src="https://img.shields.io/github/license/petalmaya/panel?style=for-the-badge&labelColor=101418&color=adabe0" alt="License">
   <br>
-  <img src="assets/screenshots/islands_bar_dark.png" alt="BlaShell" width="830">
+  <img src="assets/screenshots/islands_bar_dark.png" alt="blåShell" width="830">
 </p>
 
 A batteries-included Wayland panel that replaces your status bar, notification daemon, OSD and more with a single binary. Works out of the box with [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), and more.
@@ -18,12 +18,12 @@ This project is a fork and continuation of [VibePanel](https://github.com/pranks
 * Renamed binary to `blashell`
 * App Launcher panel enhancements
 
-## Why BlaShell?
+## Why BlåShell?
 
-BlaShell is something between a simple status bar and a full desktop shell:
+BlåShell is something between a simple status bar and a full desktop shell:
 
 - **Fast & native** – Single Rust binary with GTK4. Direct system integration, low resource usage.
-- **Batteries included** – BlaShell replaces several common components with a single binary:
+- **Batteries included** – BlåShell replaces several common components with a single binary:
   - **Notifications** – Integrated notification center
   - **OSD** – Built-in on-screen display for volume and brightness
   - **Quick settings** – Native panel for Wi‑Fi, Bluetooth, audio, power profiles and more
@@ -71,13 +71,13 @@ https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
 
 ## Quickstart
 
-1. Install BlaShell:
+1. Install blaShell:
    
    ***Other distros:** Install runtime dependencies, then:
    
    ```sh
-   curl -LO https://github.com/petalmaya/panel/releases/latest/download/blashell-x86_64-unknown-linux-gnu
-   install -Dm755 blashell-x86_64-unknown-linux-gnu ~/.local/bin/blashell
+   curl -LO https://github.com/petalmaya/panel/releases/latest/download/blåshell-x86_64-unknown-linux-gnu
+   install -Dm755 blåshell-x86_64-unknown-linux-gnu ~/.local/bin/blåshell
    ```
    
    Or build from source.
@@ -85,18 +85,18 @@ https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
 2. Run it:
    
    ```sh
-   blashell
+   blåshell
    ```
 
-See the [Installation wiki](https://github.com/prankstr/vibepanel/wiki/Installation) for more information.
+See the [Installation wiki](https://github.com/petalmaya/blashell/wiki/Installation) for more information.
 
 ## Configuration
 
-BlaShell doesn't require a config file to run, but if you want to customize anything, create a config at `~/.config/blashell/config.toml`:
+Blåshell doesn't require a config file to run, but if you want to customize anything, create a config at `~/.config/blåshell/config.toml`:
 
 ```sh
-mkdir -p ~/.config/blashell
-blashell --print-example-config > ~/.config/blashell/config.toml
+mkdir -p ~/.config/blåshell
+blåshell --print-example-config > ~/.config/blåshell/config.toml
 ```
 
 Here's a minimal example:
@@ -119,7 +119,7 @@ Changes hot-reload instantly. See the [Configuration wiki](https://github.com/pr
 
 ## Status
 
-BlaShell is based on VibePanel and continues its active development.
+BlåShell is based on VibePanel and continues its active development.
 Config options and defaults may change between releases.
 
 ### Compatibility
@@ -131,12 +131,12 @@ Config options and defaults may change between releases.
 
 Full documentation lives in the [VibePanel wiki](https://github.com/prankstr/vibepanel/wiki):
 
-- [Installation](https://github.com/prankstr/vibepanel/wiki/Installation) - Dependencies, building, auto-start
-- [Configuration](https://github.com/prankstr/vibepanel/wiki/Configuration) - All config options
-- [CLI](https://github.com/prankstr/vibepanel/wiki/CLI) - Command reference
-- [Widgets](https://github.com/prankstr/vibepanel/wiki/Widgets) - Widget reference and per-widget options
-- [Theming](https://github.com/prankstr/vibepanel/wiki/Theming) - Custom CSS styling
-- [CSS Variables](https://github.com/prankstr/vibepanel/wiki/CSS-Variables) - Full CSS variable reference
+- [Installation](https://github.com/petalmaya/blashell/wiki/Installation) - Dependencies, building, auto-start
+- [Configuration](https://github.com/petalmaya/blashell/wiki/Configuration) - All config options
+- [CLI](https://github.com/petalmaya/blashell/wiki/CLI) - Command reference
+- [Widgets](https://github.com/petalmaya/blashell/wiki/Widgets) - Widget reference and per-widget options
+- [Theming](https://github.com/petalmaya/blashell/wiki/Theming) - Custom CSS styling
+- [CSS Variables](https://github.com/petalmaya/blashell/wiki/CSS-Variables) - Full CSS variable reference
 
 ## Contributing
 
