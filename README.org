@@ -1,0 +1,235 @@
+#+TITLE: BlåShell
+#+OPTIONS: toc:2 num:nil
+#+STARTUP: overview
+
+#+CAPTION: blåShell
+[[assets/screenshots/islands_bar_dark.png]]
+
+A batteries-included Wayland panel that replaces your status bar,
+notification daemon, OSD, and more with a single binary. Works out of
+the box with Hyprland, Niri, Sway, and more.
+
+* Credits
+
+This project is a fork and continuation of *VibePanel* by David
+(prankstr), which was originally licensed under the MIT License. We
+maintain that license and credit the original author for their work.
+
+* Modifications
+
+- Renamed binary to =blashell=
+- App Launcher panel enhancements
+
+* Why BlåShell?
+
+BlåShell is something between a simple status bar and a full desktop shell.
+
+- *Fast & native*
+  Single Rust binary with GTK4. Direct system integration and low
+  resource usage.
+
+- *Batteries included*
+  BlåShell replaces several common desktop components:
+
+  - Notifications :: Integrated notification center
+  - OSD :: Built-in on-screen display for volume and brightness
+  - Quick settings :: Native panel for Wi-Fi, Bluetooth, audio,
+    power profiles, and more
+
+- *Minimal config*
+  Sensible defaults out of the box. Customize with TOML and CSS only if
+  needed.
+
+- *Modern aesthetics*
+  Floating "island" design with instant hot reloading and wallpaper
+  adaptive theming that automatically switches between light and dark.
+
+- *Integrated CLI*
+  Control volume, brightness, media playback, bar visibility, popovers,
+  and idle inhibition.
+
+* Demo
+
+These examples use roughly 10–35 lines of TOML to achieve completely
+different looks without requiring CSS.
+
+https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
+
+/A few example configurations/
+
+| [[assets/screenshots/gruvbox_desktop.png]] | [[assets/screenshots/frosted_minimal_desktop.png]] | [[assets/screenshots/sonoma_desktop.png]] |
+
+* Widgets
+
+- *Quick settings*
+  - Audio :: Control volume and outputs
+  - Brightness :: Adjust screen brightness
+  - Bluetooth :: Manage and pair devices
+  - Wi-Fi :: Connect to and manage networks
+  - VPN :: Connect to NetworkManager-managed VPN connections
+  - Idle Inhibitor :: Prevent automatic sleep
+
+- Workspaces :: Clickable workspace indicators
+- Window title :: Active window with application icon
+- Keyboard layout :: Layout indicator with click-to-cycle
+- Clock :: Configurable format with calendar popover
+- Battery :: Status display with detailed popover and power profiles
+- System tray :: XDG Status Notifier support
+- Notifications :: Notification center with Do Not Disturb
+- Updates :: Package update indicator (dnf, pacman/paru, apt,
+  flatpak)
+- CPU, Memory, GPU & Network Speed :: System resource monitors
+  (AMD and NVIDIA supported)
+- Media :: MPRIS media controls with album artwork
+- Custom :: User-defined widgets (scripts, buttons, indicators)
+- Taskbar :: Open windows as clickable buttons
+
+* Quickstart
+
+1. Install blåShell.
+
+   Other distributions: install the runtime dependencies, then:
+
+   #+begin_src sh
+   curl -LO https://github.com/petalmaya/panel/releases/latest/download/blashell-x86_64-unknown-linux-gnu
+   install -Dm755 blåshell-x86_64-unknown-linux-gnu ~/.local/bin/blåshell
+   #+end_src
+
+   Alternatively, build from source.
+
+2. Run it:
+
+   #+begin_src sh
+   blåshell
+   #+end_src
+
+See the Installation wiki for additional information.
+
+* Configuration
+
+BlåShell does not require a configuration file, but you can customize it
+by creating:
+
+#+begin_example
+~/.config/blåshell/config.toml
+#+end_example
+
+Generate an example configuration:
+
+#+begin_src sh
+mkdir -p ~/.config/blåshell
+blåshell --print-example-config > ~/.config/blåshell/config.toml
+#+end_src
+
+Minimal example:
+
+#+begin_src toml
+[bar]
+size = 32
+
+[widgets]
+left = ["workspaces", "window_title"]
+center = ["media"]
+right = ["quick_settings", "battery", "clock", "notifications"]
+
+[theme]
+mode = "dark"
+accent = "#adabe0"
+#+end_src
+
+Changes are hot reloaded instantly.
+
+* Status
+
+BlåShell is based on VibePanel and continues its active development.
+
+Configuration options and defaults may change between releases.
+
+** Compatibility
+
+- *Compositors*
+  - Hyprland
+  - Niri
+  - Sway
+  - Miracle WM
+
+- *Updates widget*
+  - dnf
+  - pacman / paru
+  - apt
+  - flatpak
+
+* Documentation
+
+The full documentation is available in the wiki.
+
+- Installation
+  - Dependencies
+  - Building
+  - Auto-start
+
+- Configuration
+  - Complete configuration reference
+
+- CLI
+  - Command reference
+
+- Widgets
+  - Widget documentation
+  - Per-widget options
+
+- Theming
+  - Custom CSS styling
+
+- CSS Variables
+  - Complete CSS variable reference
+
+* Building the .deb package
+
+BlåShell can be packaged for Debian/Ubuntu systems using =cargo-deb=.
+
+1. Install =cargo-deb= and the required build dependencies.
+
+   #+begin_src sh
+   cargo install cargo-deb
+   #+end_src
+
+2. Build the package.
+
+   #+begin_src sh
+   cargo deb -p blashell
+   #+end_src
+
+   =cargo-deb= builds a release binary and automatically determines
+   runtime dependencies (GTK4, gtk4-layer-shell, PulseAudio, etc.)
+   using =ldd=.
+
+3. Install the resulting package.
+
+   #+begin_src sh
+   sudo dpkg -i target/debian/blashell_*.deb
+   sudo apt-get install -f
+   #+end_src
+
+To customize package metadata (maintainer, description, desktop files,
+systemd units, etc.), add a =[package.metadata.deb]= section to:
+
+#+begin_example
+crates/vibepanel/Cargo.toml
+#+end_example
+
+* Contributing
+
+Pull requests are welcome. Please ensure all changes are well tested.
+
+* License
+
+MIT License.
+
+See the =LICENSE= file for details.
+
+** Attribution
+
+This project is derived from *VibePanel* by David (prankstr), originally
+licensed under the MIT License. BlåShell continues under the same
+license and gratefully acknowledges the original author's work.
