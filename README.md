@@ -63,7 +63,7 @@ https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
 - **Battery** - status with detailed popover and power profiles
 - **System tray** - XDG tray support
 - **Notifications** - notification center with Do Not Disturb
-- **Updates** - package update indicator (dnf, pacman/paru and flatpak support)
+- **Updates** - package update indicator (dnf, pacman/paru, apt and flatpak support)
 - **CPU, Memory, GPU & Network Speed** - system resource monitors (AMD and NVIDIA GPU support)
 - **Media** - MPRIS media player controls with album art
 - **Custom** - user-defined widgets (scripts, buttons, indicators)
@@ -125,7 +125,7 @@ Config options and defaults may change between releases.
 ### Compatibility
 
 - **Compositors:** [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), [Miracle WM](https://github.com/miracle-wm-org/miracle-wm)
-- **Updates widget:** dnf, pacman/paru and flatpak.
+- **Updates widget:** dnf, pacman/paru, apt and flatpak.
 
 ## Documentation
 
@@ -137,6 +137,33 @@ Full documentation lives in the [VibePanel wiki](https://github.com/prankstr/vib
 - [Widgets](https://github.com/petalmaya/blashell/wiki/Widgets) - Widget reference and per-widget options
 - [Theming](https://github.com/petalmaya/blashell/wiki/Theming) - Custom CSS styling
 - [CSS Variables](https://github.com/petalmaya/blashell/wiki/CSS-Variables) - Full CSS variable reference
+
+## Building the .deb package
+
+BlåShell can be packaged as a `.deb` for Debian/Ubuntu-based systems using [`cargo-deb`](https://github.com/kornelski/cargo-deb).
+
+1. Install `cargo-deb` and the toolchain/build dependencies from the [Installation wiki](https://github.com/petalmaya/blashell/wiki/Installation):
+
+   ```sh
+   cargo install cargo-deb
+   ```
+
+2. Build the package from the repo root:
+
+   ```sh
+   cargo deb -p blashell
+   ```
+
+   `cargo-deb` builds a release binary and inspects it with `ldd` to fill in the package's runtime dependencies (GTK4, `gtk4-layer-shell`, PulseAudio, etc.) automatically, so no separate `debian/` directory is required.
+
+3. The resulting package is written to `target/debian/blashell_<version>_<arch>.deb`. Install it with:
+
+   ```sh
+   sudo dpkg -i target/debian/blashell_*.deb
+   sudo apt-get install -f   # pull in any missing runtime dependencies
+   ```
+
+To customize packaging metadata (maintainer, description, extra assets, systemd/desktop files, etc.), add a `[package.metadata.deb]` table to `crates/vibepanel/Cargo.toml` — see the [cargo-deb documentation](https://github.com/kornelski/cargo-deb#packagemetadatadeb-options) for available options.
 
 ## Contributing
 

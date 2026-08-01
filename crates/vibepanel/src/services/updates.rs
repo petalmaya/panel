@@ -9,6 +9,7 @@
 //! Supports:
 //! - Fedora: dnf
 //! - Arch Linux: pacman (official repos), paru (official + AUR)
+//! - Debian/Ubuntu: apt
 //! - Universal: flatpak
 
 use std::cell::{Cell, RefCell};
@@ -39,6 +40,8 @@ pub enum PackageManager {
     Pacman,
     /// Arch Linux's paru (official repos + AUR).
     Paru,
+    /// Debian/Ubuntu's apt package manager.
+    Apt,
     /// Flatpak package manager.
     Flatpak,
 }
@@ -50,6 +53,7 @@ impl PackageManager {
             Self::Dnf => "sudo dnf upgrade --refresh",
             Self::Pacman => "sudo pacman -Syu",
             Self::Paru => "paru -Syu",
+            Self::Apt => "sudo apt update && sudo apt upgrade",
             Self::Flatpak => "flatpak update",
         }
     }
@@ -335,7 +339,8 @@ impl Drop for UpdatesService {
 /// 1. paru (Arch + AUR)
 /// 2. dnf (Fedora)
 /// 3. pacman (Arch official only)
-/// 4. flatpak (cross-distro)
+/// 4. apt (Debian/Ubuntu)
+/// 5. flatpak (cross-distro)
 fn detect_package_manager() -> Option<PackageManager> {
     // Check for paru first (implies Arch + AUR support)
     if Path::new("/usr/bin/paru").exists() {
@@ -350,6 +355,11 @@ fn detect_package_manager() -> Option<PackageManager> {
     // Check for pacman (Arch without AUR helper)
     if Path::new("/usr/bin/pacman").exists() {
         return Some(PackageManager::Pacman);
+    }
+
+    // Check for apt-get (Debian/Ubuntu and derivatives)
+    if Path::new("/usr/bin/apt-get").exists() {
+        return Some(PackageManager::Apt);
     }
 
     // Check for flatpak (cross-distro sandboxed apps)
@@ -374,6 +384,7 @@ fn run_update_check(pm: PackageManager, report_status: &dyn Fn(String)) -> Check
         PackageManager::Dnf => check_dnf_updates(report_status),
         PackageManager::Pacman => check_pacman_updates(report_status),
         PackageManager::Paru => check_paru_updates(report_status),
+        PackageManager::Apt => check_apt_updates(report_status),
         PackageManager::Flatpak => check_flatpak_updates(report_status),
     };
 
@@ -622,6 +633,146 @@ fn check_paru_updates(report_status: &dyn Fn(String)) -> CheckResult {
     }
 }
 
+/// Check for updates using apt (Debian/Ubuntu and derivatives).
+///
+/// Unlike DNF/pacman, plain `apt list --upgradable` only reflects whatever
+/// is already sitting in `/var/lib/apt/lists` — updating that requires
+/// root, so an unprivileged periodic check would otherwise show stale (or
+/// permanently empty) results on any system that doesn't already keep the
+/// cache fresh via `unattended-upgrades`/`cron-apt`.
+///
+/// To avoid that, this mirrors what `checkupdates` does for pacman: it
+/// refreshes the package indexes into a separate, user-owned cache
+/// directory (`Dir::State::Lists`) rather than the system one, so no root
+/// or password prompt is needed. `apt list --upgradable` is then run
+/// against that same override. If the refresh can't run for any reason
+/// (offline, sandboxed, etc.), this falls back to reading whatever is in
+/// the system cache as-is.
+fn check_apt_updates(report_status: &dyn Fn(String)) -> CheckResult {
+    report_status("Refreshing apt cache...".to_string());
+    let lists_dir = apt_lists_cache_dir();
+    let refreshed = refresh_apt_cache(&lists_dir);
+
+    report_status("Checking for upgrades...".to_string());
+    let output = if refreshed {
+        Command::new("apt")
+            .args([
+                "-o",
+                &format!("Dir::State::Lists={}", lists_dir.display()),
+                "list",
+                "--upgradable",
+            ])
+            .output()
+    } else {
+        debug!("apt: cache refresh unavailable, falling back to system apt cache");
+        Command::new("apt").args(["list", "--upgradable"]).output()
+    };
+
+    match output {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let updates = parse_apt_list_output(&stdout);
+
+            let mut by_repo = HashMap::new();
+            if !updates.is_empty() {
+                by_repo.insert("apt".to_string(), updates);
+            }
+
+            CheckResult {
+                updates_by_repo: by_repo,
+                error: None,
+            }
+        }
+        Err(e) => CheckResult {
+            updates_by_repo: HashMap::new(),
+            error: Some(format!("Failed to run apt: {}", e)),
+        },
+    }
+}
+
+/// Directory used to hold our own, user-owned copy of the apt package
+/// indexes, so refreshing them doesn't require root.
+///
+/// Resolves to `$XDG_CACHE_HOME/blashell/apt-lists`, falling back to
+/// `~/.cache/blashell/apt-lists`, and finally to a directory under the
+/// system temp dir if neither `XDG_CACHE_HOME` nor `HOME` is set.
+fn apt_lists_cache_dir() -> std::path::PathBuf {
+    let base = std::env::var_os("XDG_CACHE_HOME")
+        .map(std::path::PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".cache")))
+        .unwrap_or_else(std::env::temp_dir);
+
+    base.join("blashell").join("apt-lists")
+}
+
+/// Refresh the apt package indexes into `lists_dir` instead of the system
+/// `/var/lib/apt/lists`, so it works without root.
+///
+/// Returns `false` (rather than propagating an error) if the cache
+/// directory can't be created or `apt-get` can't be run at all, so the
+/// caller can fall back to reading the system cache as-is.
+fn refresh_apt_cache(lists_dir: &Path) -> bool {
+    if std::fs::create_dir_all(lists_dir.join("partial")).is_err() {
+        warn!("apt: could not create cache dir {:?}", lists_dir);
+        return false;
+    }
+
+    let lists_arg = format!("Dir::State::Lists={}", lists_dir.display());
+    match Command::new("apt-get")
+        .args(["-o", &lists_arg, "-qq", "update"])
+        .output()
+    {
+        Ok(output) => {
+            if !output.status.success() {
+                debug!(
+                    "apt-get update (user cache) exited with {:?}: {}",
+                    output.status.code(),
+                    String::from_utf8_lossy(&output.stderr).trim()
+                );
+            }
+            // Even a partial success (e.g. one repo unreachable) usually
+            // still writes usable index files for the other repos, so we
+            // still try to read from lists_dir rather than discarding it.
+            true
+        }
+        Err(e) => {
+            debug!("apt: failed to run apt-get update: {}", e);
+            false
+        }
+    }
+}
+
+/// Parse `apt list --upgradable` output.
+///
+/// Format:
+/// ```text
+/// Listing... Done
+/// firefox/jammy-updates 121.0+build2-0ubuntu0.22.04.1 amd64 [upgradable from: 120.0+build1-0ubuntu0.22.04.1]
+/// ```
+///
+/// We take the package name as the text before the first `/` on each line,
+/// skipping the "Listing..." header and any blank lines.
+fn parse_apt_list_output(output: &str) -> Vec<UpdateInfo> {
+    let mut updates = Vec::new();
+
+    for line in output.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with("Listing...") {
+            continue;
+        }
+
+        if let Some((name, _rest)) = line.split_once('/') {
+            if !name.is_empty() {
+                updates.push(UpdateInfo {
+                    name: name.to_string(),
+                });
+            }
+        }
+    }
+
+    updates
+}
+
 /// Check for updates using Flatpak.
 fn check_flatpak_updates(report_status: &dyn Fn(String)) -> CheckResult {
     report_status("Checking flatpak...".to_string());
@@ -789,8 +940,35 @@ firefox 119.0-1 -> 120.0-1
         let pacman_result = parse_checkupdates_output("");
         assert!(pacman_result.is_empty());
 
+        let apt_result = parse_apt_list_output("");
+        assert!(apt_result.is_empty());
+
         let flatpak_result = parse_flatpak_updates_output("");
         assert!(flatpak_result.is_empty());
+    }
+
+    #[test]
+    fn test_parse_apt_list_output() {
+        let output = r#"
+Listing... Done
+firefox/jammy-updates 121.0+build2-0ubuntu0.22.04.1 amd64 [upgradable from: 120.0+build1-0ubuntu0.22.04.1]
+libc6/jammy-security 2.35-0ubuntu3.6 amd64 [upgradable from: 2.35-0ubuntu3.5]
+vim/jammy 2:8.2.3995-1ubuntu2.15 amd64 [upgradable from: 2:8.2.3995-1ubuntu2.14]
+"#;
+
+        let result = parse_apt_list_output(output);
+
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0].name, "firefox");
+        assert_eq!(result[1].name, "libc6");
+        assert_eq!(result[2].name, "vim");
+    }
+
+    #[test]
+    fn test_parse_apt_list_output_nothing_to_do() {
+        let output = "Listing... Done\n";
+        let result = parse_apt_list_output(output);
+        assert!(result.is_empty());
     }
 
     #[test]
@@ -826,6 +1004,10 @@ org.freedesktop.Platform
         );
         assert_eq!(PackageManager::Pacman.upgrade_command(), "sudo pacman -Syu");
         assert_eq!(PackageManager::Paru.upgrade_command(), "paru -Syu");
+        assert_eq!(
+            PackageManager::Apt.upgrade_command(),
+            "sudo apt update && sudo apt upgrade"
+        );
         assert_eq!(PackageManager::Flatpak.upgrade_command(), "flatpak update");
     }
 }
