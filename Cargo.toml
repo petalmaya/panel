@@ -9,7 +9,7 @@ members = [
 version = "0.15.0"
 edition = "2024"
 license = "MIT"
-authors = ["David"]
+authors = ["David", "petalmaya"]
 
 [workspace.dependencies]
 # Serialization
