@@ -21,6 +21,7 @@ mod clock;
 mod cpu;
 mod custom;
 mod launcher;
+mod launcher_popover;
 mod gpu;
 mod keyboard_layout;
 pub mod layer_shell_popover;

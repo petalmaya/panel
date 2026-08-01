@@ -1150,6 +1150,33 @@ pub mod weather_popover {
     pub const EMPTY_LABEL: &str = "weather-popover-empty-label";
 }
 
+/// Launcher popover classes.
+pub mod launcher_popover {
+    /// Root popover container (`.launcher-popover`).
+    pub const ROOT: &str = "launcher-popover";
+
+    /// Search entry (`.launcher-search`).
+    pub const SEARCH: &str = "launcher-search";
+
+    /// Scrollable results container (`.launcher-scroll`).
+    pub const SCROLL: &str = "launcher-scroll";
+
+    /// Results list box (`.launcher-list`).
+    pub const LIST: &str = "launcher-list";
+
+    /// Single app row icon (`.launcher-row-icon`).
+    pub const ROW_ICON: &str = "launcher-row-icon";
+
+    /// Empty / no-results state container (`.launcher-empty`).
+    pub const EMPTY: &str = "launcher-empty";
+
+    /// Empty state icon (`.launcher-empty-icon`).
+    pub const EMPTY_ICON: &str = "launcher-empty-icon";
+
+    /// Empty state label (`.launcher-empty-label`).
+    pub const EMPTY_LABEL: &str = "launcher-empty-label";
+}
+
 /// Tooltip classes.
 pub mod tooltip {
     /// Tooltip window (`.vibepanel-tooltip`).
