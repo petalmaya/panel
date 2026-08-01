@@ -209,12 +209,57 @@ fn rebuild_results(
     }
 }
 
+/// Handle returned alongside the popover widget, letting the caller refresh
+/// the app list and reset search state on each open without rebuilding the
+/// widget tree (see [`LauncherPopoverOptions`] / `set_reuse_content`).
+pub struct LauncherPopoverController {
+    entry: SearchEntry,
+    list_box: ListBox,
+    empty_state: GtkBox,
+    scroll: ScrolledWindow,
+    apps: Rc<RefCell<Vec<LauncherApp>>>,
+    top_match: Rc<RefCell<Option<gio::DesktopAppInfo>>>,
+    row_apps: Rc<RefCell<Vec<(ListBoxRow, gio::DesktopAppInfo)>>>,
+    max_results: usize,
+}
+
+impl LauncherPopoverController {
+    /// Re-enumerate installed applications and reset the search box.
+    ///
+    /// Cheap compared to rebuilding the popover: `gio::AppInfo::all()` is a
+    /// cached lookup, not a disk scan, so this only re-does the (much
+    /// smaller) app-list diff + row rebuild instead of tearing down and
+    /// recreating the whole layer-shell surface, CSS tree, and icon set on
+    /// every open.
+    pub fn refresh(&self) {
+        *self.apps.borrow_mut() = collect_apps();
+        self.entry.set_text("");
+        rebuild_results(
+            &self.list_box,
+            &self.empty_state,
+            &self.scroll,
+            &self.apps.borrow(),
+            "",
+            self.max_results,
+            &self.top_match,
+            &self.row_apps,
+        );
+        // Deliberately not grabbing focus here: `on_show` fires before the
+        // window is (re)presented, so a grab now would just be cleared by
+        // `prepare_keyboard_nav()` right after. The entry's own
+        // `connect_map` handler (idle-deferred) already re-focuses it on
+        // every reopen, including reuse_content remap cycles.
+    }
+}
+
 /// Build the launcher popover content: search entry + scrollable app list.
 ///
-/// Returns the root widget. The search entry grabs keyboard focus once the
-/// popover has finished its post-present focus reset (see the `connect_map`
-/// handler below), so typing can start immediately after the popover opens.
-pub fn build_launcher_popover(options: &LauncherPopoverOptions) -> Widget {
+/// Returns the root widget plus a [`LauncherPopoverController`] for
+/// refreshing it on subsequent opens. The search entry grabs keyboard focus
+/// once the popover has finished its post-present focus reset (see the
+/// `connect_map` handler below), so typing can start immediately after the
+/// popover opens.
+pub fn build_launcher_popover(options: &LauncherPopoverOptions) -> (Widget, LauncherPopoverController) {
     let container = GtkBox::new(Orientation::Vertical, 0);
 
     let entry = SearchEntry::new();
@@ -243,7 +288,7 @@ pub fn build_launcher_popover(options: &LauncherPopoverOptions) -> Widget {
     results_stack.append(&empty_state);
     container.append(&results_stack);
 
-    let apps = Rc::new(collect_apps());
+    let apps: Rc<RefCell<Vec<LauncherApp>>> = Rc::new(RefCell::new(collect_apps()));
     let top_match: Rc<RefCell<Option<gio::DesktopAppInfo>>> = Rc::new(RefCell::new(None));
     let row_apps: Rc<RefCell<Vec<(ListBoxRow, gio::DesktopAppInfo)>>> = Rc::new(RefCell::new(Vec::new()));
     let max_results = options.max_results;
@@ -271,7 +316,7 @@ pub fn build_launcher_popover(options: &LauncherPopoverOptions) -> Widget {
     });
 
     // Initial (empty-query) population — full alphabetical list.
-    rebuild_results(&list_box, &empty_state, &scroll, &apps, "", max_results, &top_match, &row_apps);
+    rebuild_results(&list_box, &empty_state, &scroll, &apps.borrow(), "", max_results, &top_match, &row_apps);
 
     entry.connect_search_changed({
         let apps = apps.clone();
@@ -282,7 +327,7 @@ pub fn build_launcher_popover(options: &LauncherPopoverOptions) -> Widget {
         let row_apps = row_apps.clone();
         move |entry| {
             let query = entry.text().to_lowercase();
-            rebuild_results(&list_box, &empty_state, &scroll, &apps, &query, max_results, &top_match, &row_apps);
+            rebuild_results(&list_box, &empty_state, &scroll, &apps.borrow(), &query, max_results, &top_match, &row_apps);
         }
     });
 
@@ -314,5 +359,16 @@ pub fn build_launcher_popover(options: &LauncherPopoverOptions) -> Widget {
         });
     });
 
-    container.upcast::<Widget>()
+    let controller = LauncherPopoverController {
+        entry,
+        list_box,
+        empty_state,
+        scroll,
+        apps,
+        top_match,
+        row_apps,
+        max_results,
+    };
+
+    (container.upcast::<Widget>(), controller)
 }

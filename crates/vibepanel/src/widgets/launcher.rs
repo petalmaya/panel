@@ -11,6 +11,9 @@
 //! back to the old "click runs a shell command" behavior instead of opening
 //! the popover.
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use gtk4::prelude::*;
 use gtk4::{Align, GestureClick, Label};
 use gtk4::gdk;
@@ -20,7 +23,9 @@ use gtk4::glib;
 use vibepanel_core::config::WidgetEntry;
 
 use crate::widgets::base::{BaseWidget, describe_exit_status};
-use crate::widgets::launcher_popover::{LauncherPopoverOptions, build_launcher_popover};
+use crate::widgets::launcher_popover::{
+    LauncherPopoverController, LauncherPopoverOptions, build_launcher_popover,
+};
 use crate::widgets::{WidgetConfig, warn_unknown_options};
 use crate::styles::{icon as icon_style, state, widget as wgt};
 use crate::services::icons::{IconHandle, IconsService};
@@ -184,7 +189,34 @@ impl LauncherWidget {
                 placeholder: cfg.placeholder,
                 max_results: cfg.max_results,
             };
-            base.create_menu(move || build_launcher_popover(&options));
+            // The builder only runs once (see `set_reuse_content` below), so
+            // stash the controller it returns for `set_on_show` to use.
+            let controller_cell: Rc<RefCell<Option<LauncherPopoverController>>> =
+                Rc::new(RefCell::new(None));
+            let controller_for_builder = controller_cell.clone();
+            let menu_handle = base.create_menu(move || {
+                let (widget, controller) = build_launcher_popover(&options);
+                *controller_for_builder.borrow_mut() = Some(controller);
+                widget
+            });
+
+            // Reuse the built popover (search entry + row widgets + icons)
+            // across opens instead of tearing it down and re-enumerating +
+            // re-rendering every installed app from scratch each click —
+            // that rebuild was the actual source of the launcher feeling
+            // laggy, not idle RAM use.
+            menu_handle.set_reuse_content(true);
+
+            // Re-enumerate installed apps and reset the search box each
+            // time the popover opens, so newly (un)installed apps still
+            // show up and a previous query doesn't linger.
+            let controller_for_show = controller_cell.clone();
+            menu_handle.set_on_show(move || {
+                if let Some(ctrl) = controller_for_show.borrow().as_ref() {
+                    ctrl.refresh();
+                }
+            });
+
             None
         };
 
