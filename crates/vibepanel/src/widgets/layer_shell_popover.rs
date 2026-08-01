@@ -589,7 +589,9 @@ impl LayerShellPopover {
     /// Set a callback to be invoked every time the popover is shown.
     ///
     /// In reuse mode this is called after the cached content is re-parented,
-    /// allowing consumers to refresh data (e.g. update calendar to today).
+    /// allowing consumers to refresh data (e.g. update calendar to today). It
+    /// also fires when a close animation reverses before `on_close`; callbacks
+    /// that acquire resources must therefore be idempotent until `on_close` runs.
     pub fn set_on_show<F: Fn() + 'static>(&self, callback: F) {
         *self.on_show.borrow_mut() = Some(Rc::new(callback));
     }
@@ -864,6 +866,7 @@ impl LayerShellPopover {
             if self.content_dirty.take() {
                 self.rebuild_content();
             }
+            self.fire_on_show();
 
             // Use the CURRENT generation (set by hide()) so the existing tick
             // callback stays valid — no new closure allocation needed.
@@ -953,9 +956,7 @@ impl LayerShellPopover {
         anim_shell.set_child(&content);
 
         // Fire on_show callback (e.g. to refresh calendar to today's date).
-        if let Some(ref cb) = *self.on_show.borrow() {
-            cb();
-        }
+        self.fire_on_show();
 
         SurfaceStyleManager::global().apply_pango_attrs_all(&anim_shell);
 
@@ -1051,6 +1052,12 @@ impl LayerShellPopover {
                     popover.update_position();
                 }
             });
+        }
+    }
+
+    fn fire_on_show(&self) {
+        if let Some(ref callback) = *self.on_show.borrow() {
+            callback();
         }
     }
 

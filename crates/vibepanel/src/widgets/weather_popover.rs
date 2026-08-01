@@ -6,7 +6,7 @@
 
 use chrono::NaiveDate;
 use gtk4::prelude::*;
-use gtk4::{Align, Box as GtkBox, Label, Orientation, Widget};
+use gtk4::{Align, Box as GtkBox, Label, Orientation, SizeGroup, Widget};
 use std::rc::Rc;
 
 use crate::services::icons::IconsService;
@@ -18,45 +18,64 @@ use vibepanel_core::config::WeatherUnits;
 const HERO_DETAIL_MAX_WIDTH_CHARS: i32 = 16;
 
 /// Build reusable weather content plus a refresh callback for reused popovers.
-pub fn build_weather_content_reactive() -> (Widget, Rc<dyn Fn()>) {
+///
+/// Pass size groups for the compact calendar/weather layout; omit them for the
+/// standalone vertical weather popover.
+pub fn build_weather_content_reactive(
+    compact_size_groups: Option<(SizeGroup, SizeGroup)>,
+) -> (Widget, Rc<dyn Fn()>) {
     let snapshot = WeatherService::global().snapshot();
-    let container = build_weather_content_box(&snapshot);
+    let container = GtkBox::new(
+        Orientation::Vertical,
+        if compact_size_groups.is_some() { 8 } else { 12 },
+    );
+    populate_weather_content(&container, &snapshot, compact_size_groups.as_ref());
 
     let refresh_container = container.clone();
+    let refresh_size_groups = compact_size_groups.clone();
     let refresh = Rc::new(move || {
         while let Some(child) = refresh_container.first_child() {
             refresh_container.remove(&child);
         }
 
         let snapshot = WeatherService::global().snapshot();
-        populate_weather_content(&refresh_container, &snapshot);
+        populate_weather_content(&refresh_container, &snapshot, refresh_size_groups.as_ref());
     });
 
     (container.upcast::<Widget>(), refresh)
 }
 
-fn build_weather_content_box(snapshot: &WeatherSnapshot) -> GtkBox {
-    let container = GtkBox::new(Orientation::Vertical, 12);
-    populate_weather_content(&container, snapshot);
-    container
-}
-
-fn populate_weather_content(container: &GtkBox, snapshot: &WeatherSnapshot) {
+fn populate_weather_content(
+    container: &GtkBox,
+    snapshot: &WeatherSnapshot,
+    compact_size_groups: Option<&(SizeGroup, SizeGroup)>,
+) {
     if !snapshot.available || (snapshot.current.is_none() && snapshot.error.is_some()) {
         container.append(&build_empty_state(snapshot));
         return;
     }
 
     let Some(current) = snapshot.current.as_ref() else {
-        // Available but no data yet (first fetch in flight, no cache).
         container.append(&build_empty_state(snapshot));
         return;
     };
 
-    container.append(&build_hero(snapshot, current));
-
-    if !snapshot.daily.is_empty() {
-        container.append(&build_forecast_strip(snapshot));
+    let hero = build_hero(snapshot, current);
+    if let Some((left_size_group, right_size_group)) = compact_size_groups {
+        let row = GtkBox::new(Orientation::Horizontal, 12);
+        left_size_group.add_widget(&hero);
+        row.append(&hero);
+        if !snapshot.daily.is_empty() {
+            let forecast = build_forecast_strip(snapshot);
+            right_size_group.add_widget(&forecast);
+            row.append(&forecast);
+        }
+        container.append(&row);
+    } else {
+        container.append(&hero);
+        if !snapshot.daily.is_empty() {
+            container.append(&build_forecast_strip(snapshot));
+        }
     }
 
     if let Some(banner) = build_status_banner(snapshot) {

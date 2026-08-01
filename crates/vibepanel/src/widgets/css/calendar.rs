@@ -21,6 +21,10 @@ pub fn css() -> &'static str {
     margin-right: -8px;
 }
 
+.calendar-events-layout {
+    min-width: 532px;
+}
+
 calendar.view {
     background: transparent;
     border: none;
@@ -53,9 +57,28 @@ calendar.view grid label.day-number {
     font-weight: 325;
 }
 
-calendar.view grid *:selected:not(.today) {
+calendar.view:not(.calendar-events-enabled) grid *:selected:not(.today) {
     background: transparent;
     color: inherit;
+    box-shadow: none;
+}
+
+calendar.view.calendar-events-enabled grid label.day-number:checked:not(.today):not(:selected) {
+    background: transparent;
+    color: var(--color-accent-primary);
+    font-weight: 600;
+    box-shadow: none;
+}
+
+calendar.view.calendar-events-enabled grid label.day-number:hover:not(.today):not(:selected) {
+    background: var(--color-card-overlay-hover);
+    border-radius: var(--radius-widget);
+}
+
+calendar.view.calendar-events-enabled grid label.day-number:selected:not(.today) {
+    background: var(--color-card-overlay-hover);
+    color: var(--color-foreground-primary);
+    border-radius: var(--radius-widget);
     box-shadow: none;
 }
 
@@ -64,6 +87,41 @@ calendar.view grid *:selected:not(.today) {
     color: var(--color-foreground-muted);
     margin-left: 12px; /* Align with week numbers column */
     margin-top: 16px; /* Align vertically with day headers (M T W...) */
+}
+
+.calendar-events-card {
+    padding: 12px;
+    border-radius: var(--radius-card);
+    background: var(--color-card-overlay);
+    min-width: 260px;
+}
+
+.calendar-events-list {
+    min-width: 236px;
+}
+
+.calendar-events-state {
+    font-size: var(--font-size-sm);
+}
+
+.calendar-event-row {
+    padding: 4px 0;
+}
+
+.calendar-event-marker {
+    color: var(--color-accent-primary);
+    opacity: 0.72;
+    font-size: var(--font-size-lg);
+    line-height: 1;
+}
+
+.calendar-event-title {
+    font-size: var(--font-size-sm);
+    color: var(--color-foreground-primary);
+}
+
+.calendar-event-detail {
+    font-size: var(--font-size-xs);
 }
 "#
 }

@@ -3,7 +3,7 @@
 //! Uses second-resolution ticks only for formats that display seconds, and
 //! otherwise updates on minute boundaries to minimize wakeups.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -15,6 +15,7 @@ use gtk4::prelude::*;
 use tracing::{debug, trace, warn};
 use vibepanel_core::config::WidgetEntry;
 
+use crate::services::calendar as calendar_service;
 use crate::services::callbacks::CallbackId;
 use crate::services::config_manager::ConfigManager;
 use crate::services::sleep_watcher::SleepWatcher;
@@ -22,7 +23,7 @@ use crate::services::weather::WeatherService;
 use crate::styles::widget as wgt;
 use crate::widgets::WidgetConfig;
 use crate::widgets::base::{BaseWidget, MenuHandle};
-use crate::widgets::calendar_popover::build_clock_calendar_popover;
+use crate::widgets::calendar_popover::{CalendarSnapshotRefresh, build_clock_calendar_popover};
 use crate::widgets::warn_unknown_options;
 
 /// Default format string for the clock display.
@@ -51,6 +52,8 @@ pub struct ClockConfig {
     pub show_week_numbers: bool,
     /// Whether to embed weather content in the calendar popover.
     pub show_weather: bool,
+    /// Whether to auto-discover and show DankCalendar events.
+    pub calendar_events: bool,
 }
 
 impl WidgetConfig for ClockConfig {
@@ -63,6 +66,7 @@ impl WidgetConfig for ClockConfig {
                 "format_vertical",
                 "show_week_numbers",
                 "show_weather",
+                "calendar_events",
             ],
         );
 
@@ -91,11 +95,18 @@ impl WidgetConfig for ClockConfig {
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
+        let calendar_events = entry
+            .options
+            .get("calendar_events")
+            .and_then(|value| value.as_bool())
+            .unwrap_or(true);
+
         Self {
             format,
             format_vertical,
             show_week_numbers,
             show_weather,
+            calendar_events,
         }
     }
 }
@@ -107,13 +118,31 @@ impl Default for ClockConfig {
             format_vertical: None,
             show_week_numbers: true,
             show_weather: false,
+            calendar_events: true,
+        }
+    }
+}
+
+struct ClockPopoverCallbacks {
+    weather: Option<CallbackId>,
+    calendar: Option<CallbackId>,
+}
+
+impl Drop for ClockPopoverCallbacks {
+    fn drop(&mut self) {
+        if let Some(id) = self.weather.take() {
+            WeatherService::global().disconnect(id);
+        }
+        if let Some(id) = self.calendar.take() {
+            calendar_service::CalendarService::global().disconnect(id);
         }
     }
 }
 
 /// Shared calendar/weather popover binding used by clock+weather merge groups.
 pub(crate) struct CalendarWeatherPopoverBinding {
-    weather_callback_id: Option<CallbackId>,
+    // Retained solely so its Drop disconnects popover service subscriptions.
+    _callbacks: ClockPopoverCallbacks,
 }
 
 impl CalendarWeatherPopoverBinding {
@@ -121,18 +150,15 @@ impl CalendarWeatherPopoverBinding {
         menu_handle: &Rc<MenuHandle>,
         show_week_numbers: bool,
         show_weather: bool,
+        calendar_events: bool,
     ) -> Self {
-        let weather_callback_id = wire_clock_popover(menu_handle, show_week_numbers, show_weather);
         Self {
-            weather_callback_id,
-        }
-    }
-}
-
-impl Drop for CalendarWeatherPopoverBinding {
-    fn drop(&mut self) {
-        if let Some(id) = self.weather_callback_id.take() {
-            WeatherService::global().disconnect(id);
+            _callbacks: wire_clock_popover_with_config(
+                menu_handle,
+                show_week_numbers,
+                show_weather,
+                calendar_events,
+            ),
         }
     }
 }
@@ -154,7 +180,8 @@ pub struct ClockWidget {
     /// The Rc<RefCell<>> lets self-rescheduling callbacks replace the ID.
     timer_source: Rc<RefCell<Option<SourceId>>>,
     resume_callback_id: Option<CallbackId>,
-    weather_callback_id: Option<CallbackId>,
+    // Retained solely so its Drop disconnects popover service subscriptions.
+    _popover_callbacks: ClockPopoverCallbacks,
 }
 
 impl ClockWidget {
@@ -182,11 +209,19 @@ impl ClockWidget {
         }
 
         let show_week_numbers = config.show_week_numbers;
-        let weather_callback_id = if create_popover {
+        let popover_callbacks = if create_popover {
             let menu_handle = base.create_menu(|| gtk4::Label::new(None).upcast());
-            wire_clock_popover(&menu_handle, show_week_numbers, config.show_weather)
+            wire_clock_popover_with_config(
+                &menu_handle,
+                show_week_numbers,
+                config.show_weather,
+                config.calendar_events,
+            )
         } else {
-            None
+            ClockPopoverCallbacks {
+                weather: None,
+                calendar: None,
+            }
         };
 
         let format = validated_clock_format(config.format, DEFAULT_FORMAT, "format");
@@ -223,7 +258,7 @@ impl ClockWidget {
             scheduling_mode,
             timer_source,
             resume_callback_id,
-            weather_callback_id,
+            _popover_callbacks: popover_callbacks,
         };
 
         widget.update_time();
@@ -273,21 +308,29 @@ impl ClockWidget {
 }
 
 type RefreshSlot = Rc<RefCell<Option<Rc<dyn Fn()>>>>;
+type CalendarSnapshotRefreshSlot = Rc<RefCell<Option<CalendarSnapshotRefresh>>>;
 
-fn wire_clock_popover(
+fn wire_clock_popover_with_config(
     menu_handle: &Rc<MenuHandle>,
     show_week_numbers: bool,
     show_weather: bool,
-) -> Option<CallbackId> {
+    calendar_events: bool,
+) -> ClockPopoverCallbacks {
     let calendar_refresh_slot: RefreshSlot = Rc::new(RefCell::new(None));
+    let calendar_snapshot_refresh_slot: CalendarSnapshotRefreshSlot = Rc::new(RefCell::new(None));
     let weather_refresh_slot: RefreshSlot = Rc::new(RefCell::new(None));
-
     let calendar_refresh_for_builder = calendar_refresh_slot.clone();
+    let calendar_snapshot_refresh_for_builder = calendar_snapshot_refresh_slot.clone();
     let weather_refresh_for_builder = weather_refresh_slot.clone();
     menu_handle.set_builder(move || {
-        let (widget, calendar_refresh, weather_refresh) =
-            build_clock_calendar_popover(show_week_numbers, show_weather);
+        let events_enabled = calendar_events
+            && calendar_service::CalendarService::global()
+                .snapshot()
+                .backend_available;
+        let (widget, calendar_refresh, weather_refresh, calendar_snapshot_refresh) =
+            build_clock_calendar_popover(show_week_numbers, show_weather, events_enabled);
         *calendar_refresh_for_builder.borrow_mut() = Some(calendar_refresh);
+        *calendar_snapshot_refresh_for_builder.borrow_mut() = calendar_snapshot_refresh;
         *weather_refresh_for_builder.borrow_mut() = weather_refresh;
         widget
     });
@@ -297,12 +340,16 @@ fn wire_clock_popover(
     menu_handle.set_reuse_content(true);
     let calendar_refresh_for_show = calendar_refresh_slot.clone();
     menu_handle.set_on_show(move || {
+        if calendar_events {
+            calendar_service::CalendarService::global()
+                .ensure_discovery(chrono::Local::now().date_naive());
+        }
         if let Some(ref cb) = *calendar_refresh_for_show.borrow() {
             cb();
         }
     });
 
-    if show_weather {
+    let weather = if show_weather {
         let menu_handle = Rc::clone(menu_handle);
         let weather_refresh_slot = weather_refresh_slot.clone();
         Some(WeatherService::global().connect(move |_| {
@@ -314,7 +361,35 @@ fn wire_clock_popover(
         }))
     } else {
         None
-    }
+    };
+
+    let calendar = if calendar_events {
+        let menu_handle = Rc::clone(menu_handle);
+        let calendar_snapshot_refresh_slot = calendar_snapshot_refresh_slot.clone();
+        let backend_available = Cell::new(
+            calendar_service::CalendarService::global()
+                .snapshot()
+                .backend_available,
+        );
+        let id = calendar_service::CalendarService::global().connect(move |snapshot| {
+            if backend_available.replace(snapshot.backend_available) != snapshot.backend_available {
+                menu_handle.refresh_if_visible();
+            }
+            if menu_handle.is_visible() {
+                let refresh = calendar_snapshot_refresh_slot.borrow().clone();
+                if let Some(refresh) = refresh {
+                    refresh(snapshot);
+                }
+            }
+        });
+        calendar_service::CalendarService::global()
+            .ensure_discovery(chrono::Local::now().date_naive());
+        Some(id)
+    } else {
+        None
+    };
+
+    ClockPopoverCallbacks { weather, calendar }
 }
 
 fn clock_scheduling_mode(
@@ -487,9 +562,6 @@ impl Drop for ClockWidget {
         if let Some(id) = self.resume_callback_id.take() {
             SleepWatcher::global().disconnect(id);
         }
-        if let Some(id) = self.weather_callback_id.take() {
-            WeatherService::global().disconnect(id);
-        }
         debug!("Clock timer cancelled on drop");
     }
 }
@@ -573,11 +645,32 @@ mod tests {
     }
 
     #[test]
+    fn test_clock_config_calendar_events() {
+        let enabled = HashMap::from([("calendar_events".to_string(), Value::Boolean(true))]);
+        let disabled = HashMap::from([("calendar_events".to_string(), Value::Boolean(false))]);
+
+        assert!(ClockConfig::from_entry(&make_widget_entry("clock", enabled)).calendar_events);
+        assert!(!ClockConfig::from_entry(&make_widget_entry("clock", disabled)).calendar_events);
+    }
+
+    #[test]
+    fn test_clock_config_rejects_non_boolean_calendar_events() {
+        let options = HashMap::from([(
+            "calendar_events".to_string(),
+            Value::String("dankcalendar".to_string()),
+        )]);
+        let config = ClockConfig::from_entry(&make_widget_entry("clock", options));
+
+        assert!(config.calendar_events);
+    }
+
+    #[test]
     fn test_clock_config_default_impl() {
         let config = ClockConfig::default();
         assert_eq!(config.format, "%a %d %H:%M");
         assert_eq!(config.format_vertical, None);
         assert!(!config.show_weather);
+        assert!(config.calendar_events);
     }
 
     #[test]

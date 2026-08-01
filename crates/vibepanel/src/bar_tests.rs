@@ -316,6 +316,41 @@ fn run_layer_shell_popover_position_contract(position: &str) {
     flush_gtk();
 }
 
+fn run_layer_shell_popover_on_show_reversal_contract() {
+    let Some(context) = layer_shell_context_or_skip() else {
+        return;
+    };
+
+    let mut config = layer_shell_test_config();
+    config.theme.animations = true;
+    apply_layer_shell_config(&config, true);
+    let show_count = Rc::new(Cell::new(0));
+    let close_count = Rc::new(Cell::new(0));
+    let popover = LayerShellPopover::new(&context.app, "contract", || {
+        gtk4::Label::new(Some("contract popover")).upcast::<gtk4::Widget>()
+    });
+    let show_count_for_callback = show_count.clone();
+    popover.set_on_show(move || show_count_for_callback.set(show_count_for_callback.get() + 1));
+    let close_count_for_callback = close_count.clone();
+    popover.set_on_close(move || close_count_for_callback.set(close_count_for_callback.get() + 1));
+    let anchor = PopoverAnchor { x: 160, y: 160 };
+
+    popover.show_at(anchor, Some(context.monitor.clone()));
+    assert_eq!(show_count.get(), 1);
+    popover.hide();
+    popover.show_at(anchor, Some(context.monitor.clone()));
+    assert_eq!(show_count.get(), 2);
+    assert_eq!(close_count.get(), 0);
+
+    if let Some(window) = popover.test_window() {
+        window.close();
+    }
+    if let Some(catcher) = popover.test_click_catcher() {
+        catcher.close();
+    }
+    flush_gtk();
+}
+
 fn run_layer_shell_popover_offset_contract(position: &str, background_opacity: f64) {
     let Some(context) = layer_shell_context_or_skip() else {
         return;
@@ -543,6 +578,11 @@ layer_shell_contract_tests!(
         test_layer_shell_popover_position_right,
         "popover.position.right",
         run_layer_shell_popover_position_contract("right")
+    ),
+    (
+        test_layer_shell_popover_on_show_reversal,
+        "popover.on-show-reversal",
+        run_layer_shell_popover_on_show_reversal_contract()
     ),
     (
         test_layer_shell_popover_offset_top,

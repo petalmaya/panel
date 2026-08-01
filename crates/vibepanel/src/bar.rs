@@ -1220,6 +1220,7 @@ fn build_merge_group(
                     &menu_handle,
                     clock_config.show_week_numbers,
                     show_weather,
+                    clock_config.calendar_events,
                 );
                 let built_widgets = entries
                     .iter()

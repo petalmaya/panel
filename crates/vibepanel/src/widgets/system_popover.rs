@@ -646,7 +646,6 @@ impl SystemPopoverBinding {
         let gpu_cb_for_show = gpu_callback_id.clone();
         menu_handle.set_on_show(move || {
             let gpu_service = GpuService::global();
-            GpuService::request_polling(&gpu_service);
 
             if let Some(ctrl) = controller_for_show.borrow().as_ref() {
                 let sys_snapshot = SystemService::global().snapshot();
@@ -655,13 +654,18 @@ impl SystemPopoverBinding {
                 ctrl.update_from_gpu_snapshot(&gpu_snapshot);
             }
 
-            let controller_for_gpu = controller_for_show.clone();
-            let cb_id = gpu_service.connect(move |snapshot: &GpuSnapshot| {
-                if let Some(ctrl) = controller_for_gpu.borrow().as_ref() {
-                    ctrl.update_from_gpu_snapshot(snapshot);
-                }
-            });
-            gpu_cb_for_show.set(Some(cb_id));
+            // A close-animation reversal fires on_show before on_close, so retain
+            // existing polling ownership and subscription across the reversal.
+            if gpu_cb_for_show.get().is_none() {
+                GpuService::request_polling(&gpu_service);
+                let controller_for_gpu = controller_for_show.clone();
+                let cb_id = gpu_service.connect(move |snapshot: &GpuSnapshot| {
+                    if let Some(ctrl) = controller_for_gpu.borrow().as_ref() {
+                        ctrl.update_from_gpu_snapshot(snapshot);
+                    }
+                });
+                gpu_cb_for_show.set(Some(cb_id));
+            }
         });
 
         // Stop GPU polling when the popover closes.
@@ -669,8 +673,8 @@ impl SystemPopoverBinding {
         menu_handle.set_on_close(move || {
             if let Some(cb_id) = gpu_cb_for_close.take() {
                 GpuService::global().disconnect(cb_id);
+                GpuService::global().release_polling();
             }
-            GpuService::global().release_polling();
         });
 
         Self {

@@ -229,7 +229,9 @@ impl MenuHandle {
     /// Set a callback to be invoked every time the popover is shown.
     ///
     /// If the popover hasn't been created yet (lazy init), the callback is
-    /// stored and forwarded when `ensure_popover()` creates it.
+    /// stored and forwarded when `ensure_popover()` creates it. This includes
+    /// close-animation reversals before `on_close`, so resource acquisition must
+    /// remain idempotent until `on_close` runs.
     pub fn set_on_show<F: Fn() + 'static>(&self, callback: F) {
         let cb = Rc::new(callback);
         *self.on_show.borrow_mut() = Some(cb.clone());

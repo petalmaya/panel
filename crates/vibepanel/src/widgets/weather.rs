@@ -87,7 +87,7 @@ impl WeatherWidget {
 
         let menu_handle = if create_popover {
             let menu_handle = base.create_menu(move || {
-                crate::widgets::weather_popover::build_weather_content_reactive().0
+                crate::widgets::weather_popover::build_weather_content_reactive(None).0
             });
             menu_handle.set_reuse_content(true);
             Some(menu_handle)

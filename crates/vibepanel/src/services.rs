@@ -30,6 +30,7 @@ pub mod battery;
 pub mod battery_alert;
 pub mod bluetooth;
 pub mod brightness;
+pub mod calendar;
 pub mod callbacks;
 pub mod cava;
 pub mod compositor;

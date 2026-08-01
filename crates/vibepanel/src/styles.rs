@@ -1056,6 +1056,9 @@ pub mod calendar {
     /// Calendar card container (`.calendar-popover-card`).
     pub const CARD: &str = "calendar-popover-card";
 
+    /// Calendar and event side-by-side row (`.calendar-events-layout`).
+    pub const EVENTS_LAYOUT: &str = "calendar-events-layout";
+
     /// Calendar header (`.calendar-header`).
     pub const HEADER: &str = "calendar-header";
 
@@ -1070,6 +1073,30 @@ pub mod calendar {
 
     /// Show today state (`.show-today`).
     pub const SHOW_TODAY: &str = "show-today";
+
+    /// Calendar events enabled state (`.calendar-events-enabled`).
+    pub const EVENTS_ENABLED: &str = "calendar-events-enabled";
+
+    /// Event list card (`.calendar-events-card`).
+    pub const EVENTS_CARD: &str = "calendar-events-card";
+
+    /// Event list container (`.calendar-events-list`).
+    pub const EVENTS_LIST: &str = "calendar-events-list";
+
+    /// Empty/loading/error event state (`.calendar-events-state`).
+    pub const EVENTS_STATE: &str = "calendar-events-state";
+
+    /// Single event row (`.calendar-event-row`).
+    pub const EVENT_ROW: &str = "calendar-event-row";
+
+    /// Event color marker (`.calendar-event-marker`).
+    pub const EVENT_MARKER: &str = "calendar-event-marker";
+
+    /// Event title (`.calendar-event-title`).
+    pub const EVENT_TITLE: &str = "calendar-event-title";
+
+    /// Event metadata (`.calendar-event-detail`).
+    pub const EVENT_DETAIL: &str = "calendar-event-detail";
 }
 
 /// Weather popover classes.
