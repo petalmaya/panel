@@ -130,8 +130,22 @@ fn gtk_color_scheme_settings() -> Option<gio::Settings> {
     Some(gio::Settings::new(GTK_INTERFACE_SCHEMA))
 }
 
-fn gtk_scheme_preference() -> Option<SchemePolarity> {
-    let settings = gtk_color_scheme_settings()?;
+/// Read the current GTK color-scheme preference ("prefer-dark" / etc).
+///
+/// `existing` should be the long-lived `Settings` handle already held by
+/// `ConfigManager::gtk_color_scheme_watch` when one is available. Passing it
+/// through avoids opening a brand-new `gio::Settings` (and the DConf/GDBus
+/// backend connection that comes with it) on every call — see the caller in
+/// `resolve_gtk_scheme_config` for why that matters.
+fn gtk_scheme_preference(existing: Option<&gio::Settings>) -> Option<SchemePolarity> {
+    let owned;
+    let settings = match existing {
+        Some(settings) => settings,
+        None => {
+            owned = gtk_color_scheme_settings()?;
+            &owned
+        }
+    };
     scheme_from_gtk_color_scheme_value(settings.string(GTK_COLOR_SCHEME_KEY).as_str())
 }
 
@@ -169,10 +183,10 @@ fn widget_base_name(name: &str) -> &str {
     name.split_once(':').map(|(base, _)| base).unwrap_or(name)
 }
 
-fn resolve_gtk_scheme_config(config: &Config) -> Config {
+fn resolve_gtk_scheme_config(config: &Config, existing_settings: Option<&gio::Settings>) -> Config {
     let mut resolved = config.clone();
     if config_uses_gtk_scheme(&resolved) {
-        resolved.theme.scheme = gtk_scheme_preference();
+        resolved.theme.scheme = gtk_scheme_preference(existing_settings);
     }
     resolved
 }
@@ -249,7 +263,7 @@ impl ConfigManager {
             };
 
         let source_color = material_theme.as_ref().map(|t| t.source);
-        let resolved_config = resolve_gtk_scheme_config(&config);
+        let resolved_config = resolve_gtk_scheme_config(&config, None);
         let palette =
             ThemePalette::from_config(&resolved_config, material_theme.as_ref(), initial_luminance);
         let popover_palette = ThemePalette::popover_palette(
@@ -1040,7 +1054,12 @@ impl ConfigManager {
         material_theme: Option<&material_colors::theme::Theme>,
         luminance: Option<f64>,
     ) {
-        let resolved_config = resolve_gtk_scheme_config(config);
+        let cached_settings = self.gtk_color_scheme_watch.borrow();
+        let resolved_config = resolve_gtk_scheme_config(
+            config,
+            cached_settings.as_ref().map(|(settings, _)| settings),
+        );
+        drop(cached_settings);
         let palette = ThemePalette::from_config(&resolved_config, material_theme, luminance);
         let popover_palette =
             ThemePalette::popover_palette(&resolved_config, material_theme, luminance);

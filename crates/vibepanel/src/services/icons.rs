@@ -1992,7 +1992,18 @@ impl IconsService {
             spinning: Cell::new(false),
         });
 
-        // Register for live reload
+        // Register for live reload.
+        //
+        // `handles` is only otherwise pruned in `reapply_all_icons()`, which
+        // runs solely on theme/weight reconfiguration (rare - typically once
+        // per user config edit). Every icon ever created - notification
+        // icons, taskbar entries, tray items, widgets rebuilt on config hot
+        // reload - pushes a `Weak` here, and without pruning on the common
+        // path too, the Vec grows for the lifetime of the process even
+        // though the icons themselves are long gone, causing slow unbounded
+        // RSS growth. Drop dead entries here as well so the registry stays
+        // bounded by the number of *currently live* icons.
+        self.handles.borrow_mut().retain(|weak| weak.strong_count() > 0);
         self.handles.borrow_mut().push(Rc::downgrade(&inner));
 
         let handle = IconHandle { inner };
