@@ -693,8 +693,8 @@ fn check_apt_updates(report_status: &dyn Fn(String)) -> CheckResult {
 /// Directory used to hold our own, user-owned copy of the apt package
 /// indexes, so refreshing them doesn't require root.
 ///
-/// Resolves to `$XDG_CACHE_HOME/blashell/apt-lists`, falling back to
-/// `~/.cache/blashell/apt-lists`, and finally to a directory under the
+/// Resolves to `$XDG_CACHE_HOME/fluttershell/apt-lists`, falling back to
+/// `~/.cache/fluttershell/apt-lists`, and finally to a directory under the
 /// system temp dir if neither `XDG_CACHE_HOME` nor `HOME` is set.
 fn apt_lists_cache_dir() -> std::path::PathBuf {
     let base = std::env::var_os("XDG_CACHE_HOME")
@@ -702,7 +702,7 @@ fn apt_lists_cache_dir() -> std::path::PathBuf {
         .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".cache")))
         .unwrap_or_else(std::env::temp_dir);
 
-    base.join("blashell").join("apt-lists")
+    base.join("fluttershell").join("apt-lists")
 }
 
 /// Refresh the apt package indexes into `lists_dir` instead of the system

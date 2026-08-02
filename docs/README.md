@@ -1,6 +1,6 @@
 # Documentation
 
-Documentation is maintained from the original [VibePanel wiki](https://github.com/prankstr/vibepanel/wiki), which applies to BlaShell as well:
+Documentation is maintained from the original [VibePanel wiki](https://github.com/prankstr/vibepanel/wiki), which applies to FlutterShell as well:
 
 - [Installation](https://github.com/prankstr/vibepanel/wiki/Installation)
 - [Configuration](https://github.com/prankstr/vibepanel/wiki/Configuration)

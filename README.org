@@ -1,8 +1,8 @@
-#+TITLE: BlåShell
+#+TITLE: FlutterShell
 #+OPTIONS: toc:2 num:nil
 #+STARTUP: overview
 
-#+CAPTION: blåShell
+#+CAPTION: fluttershell
 [[assets/screenshots/islands_bar_dark.png]]
 
 A batteries-included Wayland panel that replaces your status bar,
@@ -17,19 +17,19 @@ maintain that license and credit the original author for their work.
 
 * Modifications
 
-- Renamed binary to =blashell=
+- Renamed binary to =fluttershell=
 - App Launcher panel enhancements
 
-* Why BlåShell?
+* Why FlutterShell?
 
-BlåShell is something between a simple status bar and a full desktop shell.
+FlutterShell is something between a simple status bar and a full desktop shell.
 
 - *Fast & native*
   Single Rust binary with GTK4. Direct system integration and low
   resource usage.
 
 - *Batteries included*
-  BlåShell replaces several common desktop components:
+  FlutterShell replaces several common desktop components:
 
   - Notifications :: Integrated notification center
   - OSD :: Built-in on-screen display for volume and brightness
@@ -86,13 +86,13 @@ https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
 
 * Quickstart
 
-1. Install blåShell.
+1. Install fluttershell.
 
    Other distributions: install the runtime dependencies, then:
 
    #+begin_src sh
-   curl -LO https://github.com/petalmaya/panel/releases/latest/download/blashell-x86_64-unknown-linux-gnu
-   install -Dm755 blåshell-x86_64-unknown-linux-gnu ~/.local/bin/blåshell
+   curl -LO https://github.com/petalmaya/panel/releases/latest/download/fluttershell-x86_64-unknown-linux-gnu
+   install -Dm755 fluttershell-x86_64-unknown-linux-gnu ~/.local/bin/fluttershell
    #+end_src
 
    Alternatively, build from source.
@@ -100,25 +100,25 @@ https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
 2. Run it:
 
    #+begin_src sh
-   blåshell
+   fluttershell
    #+end_src
 
 See the Installation wiki for additional information.
 
 * Configuration
 
-BlåShell does not require a configuration file, but you can customize it
+FlutterShell does not require a configuration file, but you can customize it
 by creating:
 
 #+begin_example
-~/.config/blåshell/config.toml
+~/.config/fluttershell/config.toml
 #+end_example
 
 Generate an example configuration:
 
 #+begin_src sh
-mkdir -p ~/.config/blåshell
-blåshell --print-example-config > ~/.config/blåshell/config.toml
+mkdir -p ~/.config/fluttershell
+fluttershell --print-example-config > ~/.config/fluttershell/config.toml
 #+end_src
 
 Minimal example:
@@ -141,7 +141,7 @@ Changes are hot reloaded instantly.
 
 * Status
 
-BlåShell is based on VibePanel and continues its active development.
+FlutterShell is based on VibePanel and continues its active development.
 
 Configuration options and defaults may change between releases.
 
@@ -186,7 +186,7 @@ The full documentation is available in the wiki.
 
 * Building the .deb package
 
-BlåShell can be packaged for Debian/Ubuntu systems using =cargo-deb=.
+FlutterShell can be packaged for Debian/Ubuntu systems using =cargo-deb=.
 
 1. Install =cargo-deb= and the required build dependencies.
 
@@ -197,7 +197,7 @@ BlåShell can be packaged for Debian/Ubuntu systems using =cargo-deb=.
 2. Build the package.
 
    #+begin_src sh
-   cargo deb -p blashell
+   cargo deb -p fluttershell
    #+end_src
 
    =cargo-deb= builds a release binary and automatically determines
@@ -207,7 +207,7 @@ BlåShell can be packaged for Debian/Ubuntu systems using =cargo-deb=.
 3. Install the resulting package.
 
    #+begin_src sh
-   sudo dpkg -i target/debian/blashell_*.deb
+   sudo dpkg -i target/debian/fluttershell_*.deb
    sudo apt-get install -f
    #+end_src
 
@@ -231,5 +231,5 @@ See the =LICENSE= file for details.
 ** Attribution
 
 This project is derived from *VibePanel* by David (prankstr), originally
-licensed under the MIT License. BlåShell continues under the same
+licensed under the MIT License. FlutterShell continues under the same
 license and gratefully acknowledges the original author's work.

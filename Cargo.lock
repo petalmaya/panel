@@ -126,42 +126,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
 
 [[package]]
-name = "blashell"
-version = "0.15.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "cargo-husky",
- "chrono",
- "clap",
- "gdk4-wayland",
- "gtk4",
- "gtk4-layer-shell",
- "image",
- "libc",
- "libpulse-binding",
- "material-colors",
- "minreq",
- "notify",
- "notify-debouncer-mini",
- "nvml-wrapper",
- "pango",
- "parking_lot",
- "serde",
- "serde_json",
- "sha2",
- "sysinfo",
- "toml 0.8.23",
- "tracing",
- "udev",
- "vibepanel-core",
- "wayland-backend",
- "wayland-client",
- "wayland-protocols",
- "wayland-scanner",
-]
-
-[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -501,6 +465,42 @@ checksum = "843fba2746e448b37e26a819579957415c8cef339bf08564fe8b7ddbd959573c"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
+]
+
+[[package]]
+name = "fluttershell"
+version = "0.15.0"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "cargo-husky",
+ "chrono",
+ "clap",
+ "gdk4-wayland",
+ "gtk4",
+ "gtk4-layer-shell",
+ "image",
+ "libc",
+ "libpulse-binding",
+ "material-colors",
+ "minreq",
+ "notify",
+ "notify-debouncer-mini",
+ "nvml-wrapper",
+ "pango",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sysinfo",
+ "toml 0.8.23",
+ "tracing",
+ "udev",
+ "vibepanel-core",
+ "wayland-backend",
+ "wayland-client",
+ "wayland-protocols",
+ "wayland-scanner",
 ]
 
 [[package]]
