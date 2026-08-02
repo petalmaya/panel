@@ -3,7 +3,7 @@
 #+STARTUP: overview
 
 #+CAPTION: fluttershell
-[[assets/screenshots/islands_bar_dark.png]]
+[[assets/screenshots/example.png]]
 
 A batteries-included Wayland panel that replaces your status bar,
 notification daemon, OSD, and more with a single binary. Works out of
@@ -57,7 +57,7 @@ https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
 
 /A few example configurations/
 
-| [[assets/screenshots/gruvbox_desktop.png]] | [[assets/screenshots/frosted_minimal_desktop.png]] | [[assets/screenshots/sonoma_desktop.png]] |
+| [[assets/screenshots/gruvbox_desktop.png]] | [[assets/screenshots/frosted_minimal_desktop.png]] | [[assets/screenshots/fluttershy.png]] |
 
 * Widgets
 
