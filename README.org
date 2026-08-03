@@ -18,7 +18,8 @@ maintain that license and credit the original author for their work.
 * Modifications
 
 - Renamed binary to =fluttershell=
-- App Launcher panel enhancements
+- App Launcher panel
+- Apt support for updater
 
 * Why FlutterShell?
 
