@@ -983,9 +983,205 @@ pub fn extract_theme_from_image(
     Some((theme, luminance))
 }
 
+/// Wallpaper scaling/fill mode, forwarded to waypaper's `--fill` flag.
+/// Mirrors the five modes waypaper itself supports (see `waypaper --help`);
+/// this is not a vibepanel-side rendering decision, just which value we
+/// pass through.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WallpaperFillMode {
+    /// Scale to cover the screen, cropping overflow, preserving aspect
+    /// ratio. The common "fill the screen" default.
+    Fill,
+    /// Scale to fit entirely within the screen, preserving aspect ratio;
+    /// may letterbox.
+    Fit,
+    /// Scale to exactly match the screen size, ignoring aspect ratio.
+    Stretch,
+    /// No scaling; centered at native resolution.
+    Center,
+    /// No scaling; repeated to cover the screen.
+    Tile,
+}
+
+impl WallpaperFillMode {
+    /// All modes, in the order they're offered in the picker UI.
+    pub const ALL: [WallpaperFillMode; 5] = [
+        WallpaperFillMode::Fill,
+        WallpaperFillMode::Fit,
+        WallpaperFillMode::Stretch,
+        WallpaperFillMode::Center,
+        WallpaperFillMode::Tile,
+    ];
+
+    /// The exact string waypaper's `--fill` flag expects.
+    pub fn as_waypaper_arg(self) -> &'static str {
+        match self {
+            WallpaperFillMode::Fill => "fill",
+            WallpaperFillMode::Fit => "fit",
+            WallpaperFillMode::Stretch => "stretch",
+            WallpaperFillMode::Center => "center",
+            WallpaperFillMode::Tile => "tile",
+        }
+    }
+
+    /// Short label for UI use.
+    pub fn label(self) -> &'static str {
+        match self {
+            WallpaperFillMode::Fill => "Fill",
+            WallpaperFillMode::Fit => "Fit",
+            WallpaperFillMode::Stretch => "Stretch",
+            WallpaperFillMode::Center => "Center",
+            WallpaperFillMode::Tile => "Tile",
+        }
+    }
+
+    /// Parse a `config.toml` value (`"fill"`, `"fit"`, ...), case-insensitive.
+    /// Falls back to `Fill` for anything unrecognized, matching this
+    /// codebase's general "warn and use a sane default" posture for bad
+    /// config values rather than hard-erroring.
+    pub fn from_config_str(value: &str) -> WallpaperFillMode {
+        match value.to_ascii_lowercase().as_str() {
+            "fit" => WallpaperFillMode::Fit,
+            "stretch" => WallpaperFillMode::Stretch,
+            "center" => WallpaperFillMode::Center,
+            "tile" => WallpaperFillMode::Tile,
+            "fill" => WallpaperFillMode::Fill,
+            other => {
+                warn!("Wallpaper picker: unknown fill mode '{other}' in config, using 'fill'");
+                WallpaperFillMode::Fill
+            }
+        }
+    }
+}
+
+impl Default for WallpaperFillMode {
+    fn default() -> Self {
+        WallpaperFillMode::Fill
+    }
+}
+
+/// Image file extensions considered wallpapers by the picker, matched
+/// case-insensitively. Deliberately a subset of what `image` can decode —
+/// these are the formats wallpaper daemons themselves commonly accept.
+const WALLPAPER_PICKER_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "webp", "bmp"];
+
+/// List wallpaper image files directly inside `dir` (non-recursive), sorted
+/// alphabetically by filename. Returns an empty vec if the directory is
+/// missing or unreadable rather than failing the whole picker.
+pub fn list_wallpapers(dir: &std::path::Path) -> Vec<std::path::PathBuf> {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        warn!(
+            "Wallpaper picker: could not read directory '{}'",
+            dir.display()
+        );
+        return Vec::new();
+    };
+
+    let mut wallpapers: Vec<std::path::PathBuf> = entries
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.is_file()
+                && path
+                    .extension()
+                    .and_then(|ext| ext.to_str())
+                    .map(|ext| {
+                        WALLPAPER_PICKER_EXTENSIONS.contains(&ext.to_ascii_lowercase().as_str())
+                    })
+                    .unwrap_or(false)
+        })
+        .collect();
+
+    wallpapers.sort();
+    wallpapers
+}
+
+/// Whether the `waypaper` binary is on `PATH`.
+pub fn waypaper_available() -> bool {
+    Command::new("which")
+        .arg("waypaper")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+/// Set the wallpaper via `waypaper --wallpaper <path>` (waypaper's
+/// scripting-friendly, non-GUI flag — see `waypaper --help`).
+///
+/// This applies the wallpaper through whatever backend waypaper is
+/// configured to use (swww/hyprpaper/swaybg/...) *and* updates waypaper's
+/// own `config.ini`, so `detect_waypaper_wallpaper` above picks it up as the
+/// active wallpaper on the next poll without any extra bookkeeping on our
+/// side.
+///
+/// Requires a reasonably recent waypaper (the `--wallpaper` flag shipped
+/// after 2.x); older installs will fail with a nonzero exit, which is
+/// surfaced as `Err` rather than silently no-opping.
+pub fn set_wallpaper_via_waypaper(
+    path: &std::path::Path,
+    monitor: Option<&str>,
+    fill: WallpaperFillMode,
+) -> Result<(), String> {
+    let mut cmd = Command::new("waypaper");
+    cmd.arg("--wallpaper").arg(path);
+    if let Some(monitor) = monitor {
+        cmd.arg("--monitor").arg(monitor);
+    }
+    cmd.arg("--fill").arg(fill.as_waypaper_arg());
+
+    let output = cmd
+        .output()
+        .map_err(|e| format!("failed to spawn waypaper: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "waypaper exited with {}: {}",
+            output.status,
+            stderr.trim()
+        ));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `list_wallpapers` should pick up recognized image extensions
+    /// case-insensitively, skip non-image files and subdirectories, and
+    /// return results sorted by filename.
+    #[test]
+    fn test_list_wallpapers_filters_and_sorts() {
+        let dir = std::env::temp_dir().join(format!(
+            "vibepanel-wallpaper-picker-test-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::create_dir_all(dir.join("subdir")).unwrap();
+
+        for name in ["b.PNG", "a.jpg", "notes.txt", "c.webp"] {
+            std::fs::write(dir.join(name), b"not a real image, extension-only test").unwrap();
+        }
+
+        let found = list_wallpapers(&dir);
+        let names: Vec<String> = found
+            .iter()
+            .map(|p| p.file_name().unwrap().to_string_lossy().to_string())
+            .collect();
+
+        assert_eq!(names, vec!["a.jpg", "b.PNG", "c.webp"]);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A missing directory should yield an empty list rather than panicking.
+    #[test]
+    fn test_list_wallpapers_missing_dir_returns_empty() {
+        let dir = std::path::PathBuf::from("/nonexistent/vibepanel-wallpaper-picker-test");
+        assert!(list_wallpapers(&dir).is_empty());
+    }
 
     /// Regression test: a fully-greyscale wallpaper has no high-chroma colours,
     /// so after the chroma retain filter `color_to_count` is empty. Before the

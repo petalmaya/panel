@@ -25,6 +25,7 @@ right = [
   "tray",
   "updates",
   "launcher",
+  "wallpaper_picker",
   "cpu",
   "quick_settings",
   "battery",
@@ -46,6 +47,21 @@ label = "Apps"
 # launch_cmd = "rofi -show drun"  # optional: skip the native popover and
 #                                  # just run this command on click instead
 #                                  # (e.g. if you prefer rofi/wofi/anyrun/fuzzel)
+
+[widgets.wallpaper_picker]
+icon = "preferences-desktop-wallpaper-symbolic"
+label = "Wallpaper"
+# Requires `waypaper` on PATH (any backend it wraps — swww, hyprpaper,
+# swaybg, ... — works transparently). Clicking opens a popover listing
+# images from `directory`; picking one applies it via waypaper and sets
+# `theme.wallpaper` below, so the panel's Material You palette re-extracts
+# from it automatically (only takes effect while `theme.mode = "auto"`).
+directory = "~/Pictures/Wallpapers"
+# monitor = "eDP-1"      # default target monitor; omit to apply to all.
+#                          Also selectable live from a dropdown in the popover.
+# fill = "fill"          # "fill" | "fit" | "stretch" | "center" | "tile"
+#                          Also selectable live from a dropdown in the popover.
+# thumbnail_size = 96    # thumbnail edge length in logical pixels
 
 # Per-widget options use [widgets.<name>] sections.
 # Example:

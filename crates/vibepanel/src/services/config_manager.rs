@@ -583,6 +583,57 @@ impl ConfigManager {
         self.config.borrow().clone()
     }
 
+    /// Persist a picked wallpaper as `theme.wallpaper` in the on-disk config
+    /// file, so it becomes the Material You theme source going forward.
+    ///
+    /// This only writes to disk — it deliberately does *not* call
+    /// `apply_config` directly. The existing config file watcher (see
+    /// `start_watching`) picks up the write within `FILE_CHANGE_DEBOUNCE_MS`
+    /// and runs the normal reload/validate/apply path, so this reuses all
+    /// the theme-rebuild logic already in `apply_config` instead of
+    /// duplicating it.
+    ///
+    /// Only the `theme.wallpaper` key is touched — everything else in the
+    /// file is round-tripped through `toml::Table` unchanged. Note this is a
+    /// plain-`toml` round-trip (not `toml_edit`), so comments and formatting
+    /// elsewhere in `config.toml` are **not** preserved. Fine for a
+    /// machine-driven "pick a wallpaper" action; switching to `toml_edit`
+    /// for comment-preserving writes would be a reasonable follow-up if
+    /// that matters to you.
+    ///
+    /// Requires the panel to have been started with a config file on disk
+    /// (i.e. not the built-in defaults) — returns an error otherwise, e.g.
+    /// if `theme.mode` isn't `"auto"` the write still succeeds but won't
+    /// visibly change anything until the mode is switched.
+    pub fn persist_theme_wallpaper(&self, wallpaper_path: &str) -> std::io::Result<()> {
+        let Some(path) = self.config_path.borrow().clone() else {
+            return Err(std::io::Error::other(
+                "no config file on disk to persist wallpaper selection into",
+            ));
+        };
+
+        let contents = std::fs::read_to_string(&path)?;
+        let mut table: toml::Table = contents
+            .parse()
+            .map_err(|e| std::io::Error::other(format!("failed to parse config.toml: {e}")))?;
+
+        let theme_table = table
+            .entry("theme")
+            .or_insert_with(|| toml::Value::Table(toml::Table::new()))
+            .as_table_mut()
+            .ok_or_else(|| std::io::Error::other("`theme` is not a table in config.toml"))?;
+
+        theme_table.insert(
+            "wallpaper".to_string(),
+            toml::Value::String(wallpaper_path.to_string()),
+        );
+
+        let serialized = toml::to_string_pretty(&table)
+            .map_err(|e| std::io::Error::other(format!("failed to serialize config.toml: {e}")))?;
+
+        std::fs::write(&path, serialized)
+    }
+
     /// Check if compositor background blur is enabled.
     ///
     /// When true, vibepanel sends ext-background-effect-v1 blur region hints

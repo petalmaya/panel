@@ -49,6 +49,8 @@ mod updates;
 mod updates_common;
 mod weather;
 mod weather_popover;
+mod wallpaper_picker;
+mod wallpaper_picker_popover;
 mod window_title;
 mod workspaces;
 
@@ -70,6 +72,7 @@ pub use spacer::{SpacerConfig, SpacerWidget};
 pub use taskbar::{TaskbarConfig, TaskbarWidget};
 pub use tray::{TrayConfig, TrayWidget};
 pub use updates::{UpdatesConfig, UpdatesWidget};
+pub use wallpaper_picker::{WallpaperPickerConfig, WallpaperPickerWidget};
 pub use weather::{WeatherConfig, WeatherWidget};
 pub use window_title::{WindowTitleConfig, WindowTitleWidget};
 pub use workspaces::{WorkspacesConfig, WorkspacesWidget};
@@ -362,6 +365,12 @@ impl WidgetFactory {
             "launcher" => {
                 let cfg = LauncherConfig::from_entry(entry);
                 let widget = LauncherWidget::new(cfg);
+                let root = widget.widget().clone().upcast::<Widget>();
+                Some(BuiltWidget::new(root, widget))
+            }
+            "wallpaper_picker" => {
+                let cfg = WallpaperPickerConfig::from_entry(entry);
+                let widget = WallpaperPickerWidget::new(cfg);
                 let root = widget.widget().clone().upcast::<Widget>();
                 Some(BuiltWidget::new(root, widget))
             }
