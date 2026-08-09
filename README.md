@@ -1,130 +1,129 @@
-#+TITLE: FlutterShell
-#+OPTIONS: toc:2 num:nil
-#+STARTUP: overview
+# VibePanel
 
-#+CAPTION: fluttershell
-[[assets/screenshots/example.png]]
+<p align="center">
+  <a href="https://github.com/prankstr/vibepanel/stargazers"><img src="https://img.shields.io/github/stars/prankstr/vibepanel?style=for-the-badge&labelColor=101418&color=adabe0" alt="GitHub stars"></a>
+  <a href="https://github.com/prankstr/vibepanel/releases"><img src="https://img.shields.io/github/v/release/prankstr/vibepanel?style=for-the-badge&labelColor=101418&color=adabe0" alt="GitHub release"></a>
+  <a href="https://aur.archlinux.org/packages/vibepanel-bin"><img src="https://img.shields.io/aur/version/vibepanel-bin?style=for-the-badge&labelColor=101418&color=adabe0" alt="AUR version"></a>
+  <a href="https://github.com/prankstr/vibepanel/blob/main/LICENSE"><img src="https://img.shields.io/github/license/prankstr/vibepanel?style=for-the-badge&labelColor=101418&color=adabe0" alt="License"></a>
+  <br>
+  <img src="assets/screenshots/islands_bar_dark.png" alt="VibePanel" width="830">
+</p>
 
-A batteries-included Wayland panel that replaces your status bar,
-notification daemon, OSD, and more with a single binary. Works out of
-the box with Hyprland, Niri, Sway, and more.
+A batteries-included Wayland panel that replaces your status bar, notification daemon, OSD and more with a single binary. Works out of the box with [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), [MangoWC](https://github.com/mangowm/mango) and other compositors.
 
-* Credits
+## Why VibePanel?
 
-This project is a fork and continuation of *VibePanel* by David
-(prankstr), which was originally licensed under the MIT License. We
-maintain that license and credit the original author for their work.
+VibePanel is something between a simple status bar and a full desktop shell:
 
-* Modifications
+- **Fast & native** – Single Rust binary with GTK4. Direct system integration, low resource usage.
+- **Batteries included** – VibePanel replaces several common components with a single binary:
+  - **Notifications** – Integrated notification center
+  - **OSD** – Built-in on-screen display for volume and brightness
+  - **Quick settings** – Native panel for Wi‑Fi, Bluetooth, audio, power profiles and more
+- **Minimal config** – Sensible defaults out of the box; customize with TOML, CSS only if needed.
+- **Modern aesthetics** – Defaults to a floating "island" design with instant hot‑reloading and features wallpaper adaptive theming that auto‑switches between light and dark.
+- **Integrated CLI** – Control volume, brightness, media playback, bar visibility, popovers and idle inhibition.
 
-- Renamed binary to =fluttershell=
-- App Launcher panel
-- Apt support for updater
+## Demo
 
-* Why FlutterShell?
-
-FlutterShell is something between a simple status bar and a full desktop shell.
-
-- *Fast & native*
-  Single Rust binary with GTK4. Direct system integration and low
-  resource usage.
-
-- *Batteries included*
-  FlutterShell replaces several common desktop components:
-
-  - Notifications :: Integrated notification center
-  - OSD :: Built-in on-screen display for volume and brightness
-  - Quick settings :: Native panel for Wi-Fi, Bluetooth, audio,
-    power profiles, and more
-
-- *Minimal config*
-  Sensible defaults out of the box. Customize with TOML and CSS only if
-  needed.
-
-- *Modern aesthetics*
-  Floating "island" design with instant hot reloading and wallpaper
-  adaptive theming that automatically switches between light and dark.
-
-- *Integrated CLI*
-  Control volume, brightness, media playback, bar visibility, popovers,
-  and idle inhibition.
-
-* Demo
-
-These examples use roughly 10–35 lines of TOML to achieve completely
-different looks without requiring CSS.
+These examples use roughly ~10–35 lines of TOML to get completely different vibes, no CSS required.
 
 https://github.com/user-attachments/assets/fba27921-0886-4e7b-850d-b51341583693
 
-/A few example configurations/
+*A few example configurations*
+<table align="center">
+  <tr>
+    <td><a href="assets/screenshots/gruvbox_desktop.png"><img src="assets/screenshots/gruvbox_desktop.png" width="270"></a></td>
+    <td><a href="assets/screenshots/frosted_minimal_desktop.png"><img src="assets/screenshots/frosted_minimal_desktop.png" width="270"></a></td>
+    <td><a href="assets/screenshots/sonoma_desktop.png"><img src="assets/screenshots/sonoma_desktop.png" width="270"></a></td>
+  </tr>
+</table>
 
-| [[assets/screenshots/gruvbox_desktop.png]] | [[assets/screenshots/frosted_minimal_desktop.png]] | [[assets/screenshots/fluttershy.png]] |
+## Widgets
 
-* Widgets
+- **Quick settings**:
+  - **Audio** - Control volume and outputs
+  - **Brightness** - Adjust screen brightness
+  - **Bluetooth** - Manage and pair devices
+  - **Wi-Fi** - Connect to and manage networks
+  - **VPN** - Connect to NetworkManager-managed VPN connections
+  - **Idle Inhibitor** - Toggle idle inhibitor to prevent sleep
+- **Workspaces** - clickable indicators with tooltips
+- **Window title** - active window with app icon
+- **Keyboard layout** - layout indicator with click to cycle
+- **Clock** - configurable format with calendar popover
+- **Battery** - status with detailed popover and power profiles
+- **System tray** - XDG tray support
+- **Notifications** - notification center with Do Not Disturb
+- **Updates** - package update indicator (dnf, pacman/paru and flatpak support)
+- **CPU, Memory, GPU & Network Speed** - system resource monitors (AMD and NVIDIA GPU support)
+- **Media** - MPRIS media player controls with album art
+- **Custom** - user-defined widgets (scripts, buttons, indicators)
+- **Taskbar** - open windows as clickable buttons
 
-- *Quick settings*
-  - Audio :: Control volume and outputs
-  - Brightness :: Adjust screen brightness
-  - Bluetooth :: Manage and pair devices
-  - Wi-Fi :: Connect to and manage networks
-  - VPN :: Connect to NetworkManager-managed VPN connections
-  - Idle Inhibitor :: Prevent automatic sleep
+## Quickstart
 
-- Workspaces :: Clickable workspace indicators
-- Window title :: Active window with application icon
-- Keyboard layout :: Layout indicator with click-to-cycle
-- Clock :: Configurable format with calendar popover
-- Battery :: Status display with detailed popover and power profiles
-- System tray :: XDG Status Notifier support
-- Notifications :: Notification center with Do Not Disturb
-- Updates :: Package update indicator (dnf, pacman/paru, apt,
-  flatpak)
-- CPU, Memory, GPU & Network Speed :: System resource monitors
-  (AMD and NVIDIA supported)
-- Media :: MPRIS media controls with album artwork
-- Custom :: User-defined widgets (scripts, buttons, indicators)
-- Taskbar :: Open windows as clickable buttons
+1. Install VibePanel:
 
-* Quickstart
+   **Arch Linux (AUR):**
 
-1. Install fluttershell.
+   ```sh
+   yay -S vibepanel-bin
+   ```
 
-   Other distributions: install the runtime dependencies, then:
+   **Fedora:**
 
-   #+begin_src sh
-   curl -LO https://github.com/petalmaya/panel/releases/latest/download/fluttershell-x86_64-unknown-linux-gnu
-   install -Dm755 fluttershell-x86_64-unknown-linux-gnu ~/.local/bin/fluttershell
-   #+end_src
+    ```sh
+    # Install RPM with the Terra Repository: https://terrapkg.com/
+    sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+    sudo dnf install vibepanel
+    ```
 
-   Alternatively, build from source.
+     ```sh
+     # Install with COPR
+     sudo dnf copr enable prankstr/vibepanel
+     sudo dnf install vibepanel
+     ```
+
+   **Nix:**
+
+   ```sh
+   # Try it
+   nix run github:prankstr/vibepanel
+
+   # Install
+   nix profile install github:prankstr/vibepanel
+   ```
+
+   **Other distros:** Install [runtime dependencies](https://github.com/prankstr/vibepanel/wiki/Installation#runtime-dependencies), then:
+
+   ```sh
+   curl -LO https://github.com/prankstr/vibepanel/releases/latest/download/vibepanel-x86_64-unknown-linux-gnu
+   install -Dm755 vibepanel-x86_64-unknown-linux-gnu ~/.local/bin/vibepanel
+   ```
+
+   Or [build from source](https://github.com/prankstr/vibepanel/wiki/Installation#from-source).
 
 2. Run it:
 
-   #+begin_src sh
-   fluttershell
-   #+end_src
+   ```sh
+   vibepanel
+   ```
 
-See the Installation wiki for additional information.
+See the [Installation wiki](https://github.com/prankstr/vibepanel/wiki/Installation) for more information.
 
-* Configuration
+## Configuration
 
-FlutterShell does not require a configuration file, but you can customize it
-by creating:
+VibePanel doesn't require a config file to run, but if you want to customize anything, create a config at `~/.config/vibepanel/config.toml`:
 
-#+begin_example
-~/.config/fluttershell/config.toml
-#+end_example
+```sh
+mkdir -p ~/.config/vibepanel
+vibepanel --print-example-config > ~/.config/vibepanel/config.toml
+```
 
-Generate an example configuration:
+Here's a minimal example:
 
-#+begin_src sh
-mkdir -p ~/.config/fluttershell
-fluttershell --print-example-config > ~/.config/fluttershell/config.toml
-#+end_src
-
-Minimal example:
-
-#+begin_src toml
+```toml
 [bar]
 size = 32
 
@@ -136,101 +135,43 @@ right = ["quick_settings", "battery", "clock", "notifications"]
 [theme]
 mode = "dark"
 accent = "#adabe0"
-#+end_src
+```
 
-Changes are hot reloaded instantly.
+Changes hot-reload instantly. See the [Configuration wiki](https://github.com/prankstr/vibepanel/wiki/Configuration) for all options.
 
-* Status
+## Status
 
-FlutterShell is based on VibePanel and continues its active development.
+VibePanel is pre-1.0 and under active development.
+Config options and defaults may change between minor releases, check the changelog when upgrading.
 
-Configuration options and defaults may change between releases.
+I built the first version in Python but wanted to migrate to Rust for performance, portability and simply to learn Rust.
+The porting took waay too long in a language I was still learning so I've written the code with a lot of AI assistance.
+I review all code and use VibePanel daily on multiple computers.
 
-** Compatibility
+### Compatibility
 
-- *Compositors*
-  - Hyprland
-  - Niri
-  - Sway
-  - Miracle WM
+- **Compositors:** [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), [Miracle WM](https://github.com/miracle-wm-org/miracle-wm), [Scroll](https://github.com/dawsers/scroll) and other i3-IPC compatible compositors. [MangoWC](https://github.com/mangowm/mango)/[DWL](https://codeberg.org/dwl/dwl) via dwl-ipc.
+- **Updates widget:** dnf, pacman/paru and flatpak.
 
-- *Updates widget*
-  - dnf
-  - pacman / paru
-  - apt
-  - flatpak
+## Documentation
 
-* Documentation
+Full documentation lives in the [wiki](https://github.com/prankstr/vibepanel/wiki):
 
-The full documentation is available in the wiki.
+- [Installation](https://github.com/prankstr/vibepanel/wiki/Installation) - Dependencies, building, auto-start
+- [Configuration](https://github.com/prankstr/vibepanel/wiki/Configuration) - All config options
+- [CLI](https://github.com/prankstr/vibepanel/wiki/CLI) - Command reference
+- [Widgets](https://github.com/prankstr/vibepanel/wiki/Widgets) - Widget reference and per-widget options
+- [Theming](https://github.com/prankstr/vibepanel/wiki/Theming) - Custom CSS styling
+- [CSS Variables](https://github.com/prankstr/vibepanel/wiki/CSS-Variables) - Full CSS variable reference
 
-- Installation
-  - Dependencies
-  - Building
-  - Auto-start
+## Contributing
 
-- Configuration
-  - Complete configuration reference
+- Found a bug? [Open an issue](https://github.com/prankstr/vibepanel/issues)
+- Want a feature? [Request it](https://github.com/prankstr/vibepanel/issues)
+- Pull requests welcome
 
-- CLI
-  - Command reference
+If you find VibePanel useful, consider giving it a star. It helps others discover the project.
 
-- Widgets
-  - Widget documentation
-  - Per-widget options
+## License
 
-- Theming
-  - Custom CSS styling
-
-- CSS Variables
-  - Complete CSS variable reference
-
-* Building the .deb package
-
-FlutterShell can be packaged for Debian/Ubuntu systems using =cargo-deb=.
-
-1. Install =cargo-deb= and the required build dependencies.
-
-   #+begin_src sh
-   cargo install cargo-deb
-   #+end_src
-
-2. Build the package.
-
-   #+begin_src sh
-   cargo deb -p fluttershell
-   #+end_src
-
-   =cargo-deb= builds a release binary and automatically determines
-   runtime dependencies (GTK4, gtk4-layer-shell, PulseAudio, etc.)
-   using =ldd=.
-
-3. Install the resulting package.
-
-   #+begin_src sh
-   sudo dpkg -i target/debian/fluttershell_*.deb
-   sudo apt-get install -f
-   #+end_src
-
-To customize package metadata (maintainer, description, desktop files,
-systemd units, etc.), add a =[package.metadata.deb]= section to:
-
-#+begin_example
-crates/vibepanel/Cargo.toml
-#+end_example
-
-* Contributing
-
-Pull requests are welcome. Please ensure all changes are well tested.
-
-* License
-
-MIT License.
-
-See the =LICENSE= file for details.
-
-** Attribution
-
-This project is derived from *VibePanel* by David (prankstr), originally
-licensed under the MIT License. FlutterShell continues under the same
-license and gratefully acknowledges the original author's work.
+MIT

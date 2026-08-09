@@ -468,42 +468,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fluttershell"
-version = "0.15.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "cargo-husky",
- "chrono",
- "clap",
- "gdk4-wayland",
- "gtk4",
- "gtk4-layer-shell",
- "image",
- "libc",
- "libpulse-binding",
- "material-colors",
- "minreq",
- "notify",
- "notify-debouncer-mini",
- "nvml-wrapper",
- "pango",
- "parking_lot",
- "serde",
- "serde_json",
- "sha2",
- "sysinfo",
- "toml 0.8.23",
- "tracing",
- "udev",
- "vibepanel-core",
- "wayland-backend",
- "wayland-client",
- "wayland-protocols",
- "wayland-scanner",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2042,6 +2006,42 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "vibepanel"
+version = "0.15.0"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "cargo-husky",
+ "chrono",
+ "clap",
+ "gdk4-wayland",
+ "gtk4",
+ "gtk4-layer-shell",
+ "image",
+ "libc",
+ "libpulse-binding",
+ "material-colors",
+ "minreq",
+ "notify",
+ "notify-debouncer-mini",
+ "nvml-wrapper",
+ "pango",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sysinfo",
+ "toml 0.8.23",
+ "tracing",
+ "udev",
+ "vibepanel-core",
+ "wayland-backend",
+ "wayland-client",
+ "wayland-protocols",
+ "wayland-scanner",
+]
 
 [[package]]
 name = "vibepanel-core"
