@@ -33,7 +33,6 @@ const RECONNECT_MULTIPLIER: f64 = 1.5;
 const POINTER_FOCUS_REFRESH_DELAY: Duration = Duration::from_millis(50);
 
 pub struct HyprlandBackend {
-    allowed_outputs: RwLock<Vec<String>>,
     running: Arc<AtomicBool>,
     event_thread: Mutex<Option<JoinHandle<()>>>,
     socket_path: RwLock<Option<String>>,
@@ -55,9 +54,8 @@ pub struct HyprlandBackend {
 }
 
 impl HyprlandBackend {
-    pub fn new(outputs: Option<Vec<String>>) -> Self {
+    pub fn new() -> Self {
         Self {
-            allowed_outputs: RwLock::new(outputs.unwrap_or_default()),
             running: Arc::new(AtomicBool::new(false)),
             event_thread: Mutex::new(None),
             socket_path: RwLock::new(None),
@@ -593,7 +591,6 @@ impl HyprlandBackend {
         *self.main_keyboard_name.write() = Some(kb_name);
         *self.keyboard_layout.write() = Some(KeyboardLayoutInfo {
             layout_name: active_layout,
-            short_name: String::new(), // Widget extracts short name
             layout_count,
         });
     }
@@ -804,7 +801,6 @@ impl HyprlandBackend {
             let new_focused = WindowInfo {
                 title,
                 app_id,
-                workspace_id,
                 output,
             };
 
@@ -965,7 +961,6 @@ impl HyprlandBackend {
                     if is_main {
                         let info = KeyboardLayoutInfo {
                             layout_name: layout_name.to_string(),
-                            short_name: String::new(), // Widget extracts short name
                             layout_count: self
                                 .keyboard_layout
                                 .read()
@@ -1152,7 +1147,6 @@ impl CompositorBackend for HyprlandBackend {
             .lock()
             .unwrap_or_else(|e| e.into_inner())
             .clone();
-        let allowed_outputs = self.allowed_outputs.read().clone();
         // The manager-side backend uses this metadata for named workspace switching.
         let workspaces = Arc::clone(&self.workspaces);
         let kb_callback = self
@@ -1169,7 +1163,6 @@ impl CompositorBackend for HyprlandBackend {
         // also set on `self` so switch_workspace() works correctly.
         // The `running` flag is shared so stop() can signal the thread to exit.
         let backend = Arc::new(HyprlandBackend {
-            allowed_outputs: RwLock::new(allowed_outputs),
             running,
             event_thread: Mutex::new(None),
             socket_path: RwLock::new(socket_path),
@@ -1286,16 +1279,6 @@ impl Drop for HyprlandBackend {
     }
 }
 
-// Implement PartialEq for WindowInfo for comparison
-impl PartialEq for WindowInfo {
-    fn eq(&self, other: &Self) -> bool {
-        self.title == other.title
-            && self.app_id == other.app_id
-            && self.workspace_id == other.workspace_id
-            && self.output == other.output
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1395,7 +1378,7 @@ mod tests {
 
     #[test]
     fn workspace_id_for_name_finds_named_workspace_id() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: -1337,
             idx: -1,
@@ -1409,7 +1392,7 @@ mod tests {
 
     #[test]
     fn workspace_switch_target_formats_named_workspaces() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: -1337,
             idx: -1,
@@ -1424,7 +1407,7 @@ mod tests {
 
     #[test]
     fn workspace_lua_target_quotes_named_workspaces() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: -1337,
             idx: -1,
@@ -1479,7 +1462,7 @@ mod tests {
 
     #[test]
     fn has_workspace_metadata_checks_workspace_id() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: -1337,
             idx: -1,
@@ -1493,7 +1476,7 @@ mod tests {
 
     #[test]
     fn focusedmon_uses_event_workspace_name_when_cache_missing() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: -1337,
             idx: -1,
@@ -1515,7 +1498,7 @@ mod tests {
 
     #[test]
     fn focusedmon_prefers_event_workspace_name_over_stale_cache() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: -1337,
             idx: -1,
@@ -1536,7 +1519,7 @@ mod tests {
 
     #[test]
     fn workspace_event_resolves_prefixed_named_workspace() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: -1337,
             idx: -1,
@@ -1552,7 +1535,7 @@ mod tests {
 
     #[test]
     fn workspace_event_clears_matching_urgent_workspace() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: 2,
             idx: 2,
@@ -1575,7 +1558,7 @@ mod tests {
 
     #[test]
     fn clear_urgent_workspace_removes_matching_workspace() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         backend
             .workspace_snapshot
             .write()
@@ -1594,11 +1577,10 @@ mod tests {
 
     #[test]
     fn activelayout_main_keyboard_updates_layout_from_event() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.main_keyboard_name.write() = Some("keyboard-a".to_string());
         *backend.keyboard_layout.write() = Some(KeyboardLayoutInfo {
             layout_name: "English (US)".to_string(),
-            short_name: String::new(),
             layout_count: Some(2),
         });
 
@@ -1613,7 +1595,7 @@ mod tests {
 
     #[test]
     fn workspacev2_event_resolves_prefixed_named_workspace() {
-        let backend = HyprlandBackend::new(None);
+        let backend = HyprlandBackend::new();
         *backend.workspaces.write() = vec![WorkspaceMeta {
             id: -1337,
             idx: -1,

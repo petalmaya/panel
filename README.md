@@ -22,7 +22,7 @@ VibePanel is something between a simple status bar and a full desktop shell:
   - **Quick settings** – Native panel for Wi‑Fi, Bluetooth, audio, power profiles and more
 - **Minimal config** – Sensible defaults out of the box; customize with TOML, CSS only if needed.
 - **Modern aesthetics** – Defaults to a floating "island" design with instant hot‑reloading and features wallpaper adaptive theming that auto‑switches between light and dark.
-- **Integrated CLI** – Control volume, brightness, media playback, bar visibility, popovers and idle inhibition.
+- **Integrated CLI** – Control volume, brightness, media playback, bar visibility, popovers, idle inhibition, and more.
 
 ## Demo
 
@@ -150,7 +150,7 @@ I review all code and use VibePanel daily on multiple computers.
 
 ### Compatibility
 
-- **Compositors:** [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), [Miracle WM](https://github.com/miracle-wm-org/miracle-wm), [Scroll](https://github.com/dawsers/scroll) and other i3-IPC compatible compositors. [MangoWC](https://github.com/mangowm/mango)/[DWL](https://codeberg.org/dwl/dwl) via dwl-ipc.
+- **Compositors:** [Hyprland](https://github.com/hyprwm/Hyprland), [Niri](https://github.com/niri-wm/niri), [Sway](https://github.com/swaywm/sway), [Miracle WM](https://github.com/miracle-wm-org/miracle-wm), [Scroll](https://github.com/dawsers/scroll) and other i3-IPC compatible compositors. [MangoWC](https://github.com/mangowm/mango) via its JSON IPC socket.
 - **Updates widget:** dnf, pacman/paru and flatpak.
 
 ## Documentation

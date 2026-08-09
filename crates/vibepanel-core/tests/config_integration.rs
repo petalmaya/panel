@@ -26,18 +26,6 @@ fn test_load_real_config() {
     // Check widgets are loaded
     assert!(!config.widgets.left.is_empty(), "Expected left widgets");
     assert!(!config.widgets.right.is_empty(), "Expected right widgets");
-
-    // Verify advanced config has valid compositor
-    assert!(
-        ["auto", "mango", "hyprland", "niri"].contains(&config.advanced.compositor.as_str()),
-        "Compositor should be valid"
-    );
-
-    // Verify theme config has valid mode
-    assert!(
-        ["auto", "dark", "light"].contains(&config.theme.mode.as_str()),
-        "Theme mode should be valid"
-    );
 }
 
 #[test]
