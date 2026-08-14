@@ -20,6 +20,8 @@ mod calendar_popover;
 mod clock;
 mod cpu;
 mod custom;
+mod launcher;
+mod launcher_popover;
 mod gpu;
 mod gpu_format;
 mod history_graph;
@@ -77,6 +79,7 @@ pub use workspaces::{WorkspacesConfig, WorkspacesWidget};
 
 pub use cpu::{CpuConfig, CpuWidget};
 pub use custom::{CustomConfig, CustomWidget};
+pub use launcher::{LauncherConfig, LauncherWidget};
 pub use gpu::{GpuConfig, GpuWidget};
 pub use keyboard_layout::{KeyboardLayoutConfig, KeyboardLayoutWidget};
 pub use mango_layout::{MangoLayoutConfig, MangoLayoutWidget};
@@ -385,6 +388,12 @@ impl WidgetFactory {
                 let root = media.widget().clone().upcast::<Widget>();
                 let edge_interaction = media.edge_interaction();
                 Some(BuiltWidget::new(root, media).with_edge_interaction(edge_interaction))
+            }
+            "launcher" => {
+                let cfg = LauncherConfig::from_entry(entry);
+                let widget = LauncherWidget::new(cfg);
+                let root = widget.widget().clone().upcast::<Widget>();
+                Some(BuiltWidget::new(root, widget))
             }
             "spacer" => {
                 let cfg = SpacerConfig::from_entry(entry);

@@ -41,6 +41,7 @@ mod base;
 mod battery;
 mod buttons;
 mod calendar;
+mod launcher;
 mod mango_layout;
 mod media;
 mod notifications;
@@ -81,6 +82,7 @@ pub fn widget_css(config: &Config) -> String {
     let buttons_css = buttons::css();
     let calendar_css = calendar::css();
     let quick_settings_css = quick_settings::css(animations);
+    let launcher_css = launcher::css();
     let battery_css = battery::css();
     let notifications_css = notifications::css(animations);
     let osd_css = osd::css();
@@ -90,6 +92,6 @@ pub fn widget_css(config: &Config) -> String {
     let weather_css = weather::css();
 
     format!(
-        "{bar_css}\n{tray_css}\n{buttons_css}\n{calendar_css}\n{quick_settings_css}\n{battery_css}\n{notifications_css}\n{osd_css}\n{media_css}\n{mango_layout_css}\n{system_css}\n{weather_css}"
+        "{bar_css}\n{tray_css}\n{buttons_css}\n{calendar_css}\n{quick_settings_css}\n{launcher_css}\n{battery_css}\n{notifications_css}\n{osd_css}\n{media_css}\n{mango_layout_css}\n{system_css}\n{weather_css}"
     )
 }

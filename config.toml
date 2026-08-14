@@ -24,6 +24,7 @@ center = ["media"]
 right = [
   "tray",
   "updates",
+  "launcher",
   "cpu",
   "quick_settings",
   "battery",
@@ -34,6 +35,17 @@ border_radius = 40
 background_opacity = 1.0
 # popover_background_opacity = 0.9  # Override popover opacity (default: max of bar and widget opacity)
 # outline = true                    # Override theme.outline for widgets (omit = inherit)
+
+[widgets.launcher]
+icon = "glyph:⏏"      # optional: glyph or icon name
+label = "Apps"
+# Clicking opens a native GTK popover with a search box and your installed
+# apps (from .desktop entries) — no external launcher required.
+# placeholder = "Search apps…"  # search entry placeholder text
+# max_results = 50              # cap on rows shown in the results list
+# launch_cmd = "rofi -show drun"  # optional: skip the native popover and
+#                                  # just run this command on click instead
+#                                  # (e.g. if you prefer rofi/wofi/anyrun/fuzzel)
 
 # Per-widget options use [widgets.<name>] sections.
 # Example:
