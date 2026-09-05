@@ -1446,6 +1446,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5a041e753da8b807c9255f28de81879c78c876392ff2469cde94799b2896b9d"
 
 [[package]]
+name = "qrcode"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d68782463e408eb1e668cf6152704bd856c78c5b6417adaee3203d8f4c1fc9ec"
+
+[[package]]
 name = "quick-error"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2009,7 +2015,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vibepanel"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -2029,6 +2035,7 @@ dependencies = [
  "nvml-wrapper",
  "pango",
  "parking_lot",
+ "qrcode",
  "serde",
  "serde_json",
  "sha2",
@@ -2043,7 +2050,7 @@ dependencies = [
 
 [[package]]
 name = "vibepanel-core"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "material-colors",
  "serde",
